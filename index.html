@@ -369,7 +369,7 @@ const AnimData = {
     gY: { val: 0 }
 };
 
-// ★ V45.8 FIX: Gセンサーデバイス入力用変数を復元
+// Gセンサーデバイス入力用
 let rawAcc = { x: 0, y: 0 };
 let currentG = { x: 0, y: 0 };
 const FilteredG = { x: 0, y: 0 };
@@ -722,7 +722,22 @@ const OBD = {
     connect: async function() {
         UI.log("Scanning for OBD-II...", "system");
         try {
-            bluetoothDevice = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: TARGET_SERVICE_UUIDS });
+            // ★ V45.10 FIX: 無関係なテレビやPCを除外し、OBDアダプターだけを賢く探すスマートフィルター
+            const obdFilters = [
+                { namePrefix: 'OBD' }, { namePrefix: 'obd' }, 
+                { namePrefix: 'vLinker' }, { namePrefix: 'V-Link' }, { namePrefix: 'VLinker' }, 
+                { namePrefix: 'ELM327' }, { namePrefix: 'elm327' }, 
+                { namePrefix: 'Vgate' }, { namePrefix: 'Viecar' }, 
+                { namePrefix: 'Carista' }, { namePrefix: 'UniCarScan' }, { namePrefix: 'Tonwon' },
+                { services: [TARGET_SERVICE_UUIDS[0]] }, 
+                { services: [TARGET_SERVICE_UUIDS[1]] }
+            ];
+
+            bluetoothDevice = await navigator.bluetooth.requestDevice({ 
+                filters: obdFilters,
+                optionalServices: TARGET_SERVICE_UUIDS 
+            });
+            
             bluetoothDevice.addEventListener('gattserverdisconnected', () => this.onDisconnected());
             const server = await bluetoothDevice.gatt.connect();
             
@@ -751,7 +766,6 @@ const OBD = {
             Sim.stop();
             State.isSimulation = false;
 
-            // ★ V45.8 FIX: 実車接続時にデモの仮想データを完全に消去し、キメラデータ混入を防止
             CarData.rpm = 0; CarData.speed = 0; CarData.coolant = 0; CarData.intake = 0; CarData.boost = 0.0; CarData.map = 101; CarData.baro = 101; CarData.throttle = 0; CarData.pedal = 0; CarData.timing = 0; CarData.hp = 0; CarData.torque = 0;
             Peaks.rpm = 0; Peaks.speed = 0; Peaks.coolant = 0; Peaks.dynamic = 0.0; Peaks.hp = 0; Peaks.torque = 0;
             Object.keys(AnimData).forEach(k => { AnimData[k].val = 0; AnimData[k].vel = 0; });
@@ -780,9 +794,7 @@ const OBD = {
     sendCmd: async function(cmd) {
         if (!txCharacteristic) return;
         try {
-            // ★ V45.9 FIX: 送信時のコンソールログを復活
             if (!State.isDTCScanning) UI.log(cmd.replace('\r', ''), 'tx');
-            
             if (txCharacteristic.properties.writeWithoutResponse) { await txCharacteristic.writeValueWithoutResponse(new TextEncoder().encode(cmd)); } 
             else { await txCharacteristic.writeValue(new TextEncoder().encode(cmd)); }
         } catch(e) { UI.log("Write fail: " + e.message, "error"); }
@@ -817,9 +829,7 @@ const OBD = {
         if (this.rxBuffer.includes('>')) {
             const cleanRes = this.rxBuffer.replace(/[\r\n>]/g, '').trim();
             if (cleanRes.length > 0 && !cleanRes.includes("?") && !cleanRes.includes("NODATA") && !cleanRes.includes("ERROR")) {
-                // ★ V45.9 FIX: 受信時のコンソールログを復活
                 if (!State.isDTCScanning) UI.log(cleanRes, 'rx');
-                
                 const parts = cleanRes.split('41');
                 parts.forEach(part => {
                     if (part.length >= 4 && !State.isDTCScanning) {
@@ -832,7 +842,8 @@ const OBD = {
                 if (isWaitingForResponse) {
                     clearTimeout(this.timeoutTimer);
                     isWaitingForResponse = false;
-                    setTimeout(() => this.pollNext(), 0); 
+                    // ★ V45.10 FIX: アダプターの処理追いつきを防ぐため「20ミリ秒」の休憩を追加
+                    setTimeout(() => this.pollNext(), 20); 
                 }
             }
         }
@@ -866,7 +877,6 @@ const GForce = {
     isEnabled: false,
     skip: function() { document.getElementById('g-sensor-modal').classList.add('hidden'); },
     
-    // ★ V45.8 FIX: 消えていたキャリブレーション処理を復元し、iOSの権限も確実に突破
     enableAndCalibrate: async function() { 
         document.getElementById('g-sensor-modal').classList.add('hidden'); 
         
@@ -899,7 +909,6 @@ const GForce = {
     onMotion: function(event) {
         if (!event.accelerationIncludingGravity) return;
         
-        // スマホを縦（ポートレート）でエアコン吹き出し口等に設置した前提の軸計算
         rawAcc.x = (event.accelerationIncludingGravity.x || 0) / 9.8; 
         rawAcc.y = (event.accelerationIncludingGravity.y || 0) / 9.8;
         
@@ -1130,7 +1139,7 @@ const App = {
         Sim.start();
         
         requestAnimationFrame((now) => Engine.loop(now));
-        UI.log("App Boot Sequence Complete. REBORN ENGINE v45.8", "system");
+        UI.log("App Boot Sequence Complete. REBORN ENGINE v45.10", "system");
 
         if (!navigator.bluetooth) {
             setTimeout(() => {
