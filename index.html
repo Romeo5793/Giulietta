@@ -148,7 +148,7 @@
                 <div id="power-display-card" class="glass-card flex-1 p-2 flex flex-col justify-center relative pointer-events-auto">
                     <div class="w-full flex justify-between items-end text-[7px] font-bold font-mono mb-1.5">
                         <span class="text-gray-500 tracking-widest">DYNAMO</span>
-                        <span class="text-[5px] text-gray-500 font-normal">MAX <span id="peak-hp" class="text-white">0</span>PS / <span id="peak-torque" class="text-white">0</span>Nm</span>
+                        <span class="text-[5px] text-gray-500 font-normal">MAX <span id="peak-hp" class="text-white">0</span>PS / <span id="peak-torque" class="text-white">0.0</span>kgm</span>
                     </div>
                     <div class="flex-1 flex flex-col justify-center gap-2">
                         <div class="flex flex-col gap-0.5">
@@ -163,7 +163,7 @@
                         <div class="flex flex-col gap-0.5">
                             <div class="flex justify-between items-end text-[6px] font-mono">
                                 <span class="text-orange-500/80 tracking-widest">TORQUE</span>
-                                <div class="flex items-baseline gap-0.5"><span id="torque-value" class="text-base font-bold text-white leading-none">0</span> <span class="text-[6px] text-gray-500">Nm</span></div>
+                                <div class="flex items-baseline gap-0.5"><span id="torque-value" class="text-base font-bold text-white leading-none">0.0</span> <span class="text-[6px] text-gray-500">kgm</span></div>
                             </div>
                             <div class="w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10">
                                 <div id="torque-bar" class="gpu-accel h-full bg-gradient-to-r from-orange-600 to-orange-400" style="width: 0%;"></div>
@@ -561,7 +561,8 @@ const Engine = {
         UI.els['gauge-arc'].style.strokeDashoffset = 534 - (Math.min(AnimData.rpm.val / 8000, 1.0) * 534);
 
         UI.els['hp-value'].textContent = Math.round(AnimData.hp.val);
-        UI.els['torque-value'].textContent = Math.round(AnimData.torque.val);
+        // ★ トルクを kgm 表記(小数点第一位)に変更
+        UI.els['torque-value'].textContent = (AnimData.torque.val / 9.8).toFixed(1);
         UI.els['hp-bar'].style.width = `${Math.min(AnimData.hp.val / 220 * 100, 100)}%`;
         UI.els['torque-bar'].style.width = `${Math.min(AnimData.torque.val / 350 * 100, 100)}%`;
 
@@ -621,7 +622,8 @@ const Calc = {
 
         UI.els['peak-speed'].textContent = Math.round(Peaks.speed); UI.els['peak-coolant'].textContent = Math.round(Peaks.coolant);
         UI.els['peak-dynamic'].textContent = State.mode === 'dynamic' ? Peaks.dynamic.toFixed(2) : Math.round(Peaks.dynamic);
-        UI.els['peak-hp'].textContent = Math.round(Peaks.hp); UI.els['peak-torque'].textContent = Math.round(Peaks.torque);
+        // ★ ピークトルクも kgm 表記に変更
+        UI.els['peak-hp'].textContent = Math.round(Peaks.hp); UI.els['peak-torque'].textContent = (Peaks.torque / 9.8).toFixed(1);
 
         if (CarData.rpm > 6000) { 
             UI.els['dial-glow'].classList.add('redline-glow'); UI.els['rpm-value'].classList.add('text-[#D1121C]'); 
@@ -852,12 +854,14 @@ const CSV = {
     debugLogs: [],
     timer: null,
     start: function() {
-        telemetryData = ["Timestamp,RPM,Speed_kmh,Coolant_C,Intake_C,Baro_kPa,MAP_kPa,Boost_bar,Throttle_%,Pedal_%,Timing_deg,HP_PS,Torque_Nm,GLat,GLong"];
+        // ★ ヘッダーの Torque_Nm を Torque_kgm に変更
+        telemetryData = ["Timestamp,RPM,Speed_kmh,Coolant_C,Intake_C,Baro_kPa,MAP_kPa,Boost_bar,Throttle_%,Pedal_%,Timing_deg,HP_PS,Torque_kgm,GLat,GLong"];
         if (this.timer) clearInterval(this.timer);
         this.timer = setInterval(() => {
             if (!State.isSimulation && !State.isDTCScanning) {
                 const ts = new Date().toISOString();
-                const row = `${ts},${Math.round(CarData.rpm)},${Math.round(CarData.speed)},${Math.round(CarData.coolant)},${Math.round(CarData.intake)},${CarData.baro},${CarData.map},${CarData.boost.toFixed(2)},${Math.round(CarData.throttle)},${Math.round(CarData.pedal)},${CarData.timing.toFixed(1)},${Math.round(CarData.hp)},${Math.round(CarData.torque)},${FilteredG.x.toFixed(3)},${FilteredG.y.toFixed(3)}`;
+                // ★ CSVに保存する値も kgm (小数点第一位) に変更
+                const row = `${ts},${Math.round(CarData.rpm)},${Math.round(CarData.speed)},${Math.round(CarData.coolant)},${Math.round(CarData.intake)},${CarData.baro},${CarData.map},${CarData.boost.toFixed(2)},${Math.round(CarData.throttle)},${Math.round(CarData.pedal)},${CarData.timing.toFixed(1)},${Math.round(CarData.hp)},${(CarData.torque / 9.8).toFixed(1)},${FilteredG.x.toFixed(3)},${FilteredG.y.toFixed(3)}`;
                 telemetryData.push(row);
             }
         }, 100);
