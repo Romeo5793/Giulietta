@@ -26,47 +26,30 @@
         .dna-switch-track { background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(20,20,25,0.85) 50%, rgba(0,0,0,0.85) 100%); box-shadow: inset 0 2px 8px rgba(0,0,0,0.9), 0 1px 1px rgba(255,255,255,0.02); }
         
         /* レトロスキン (Alfa Classic Theme) */
-        body.retro-bg #app-wrapper {
-            background-color: #0c0202;
-            background-image: radial-gradient(rgba(209, 18, 28, 0.1) 1px, transparent 0), radial-gradient(rgba(209, 18, 28, 0.1) 1px, transparent 0);
-        }
-        body.retro-bg .glass-card {
-            background: linear-gradient(135deg, rgba(30, 5, 5, 0.7), rgba(10, 0, 0, 0.8));
-            border: 1px solid rgba(209, 18, 28, 0.25);
-            box-shadow: inset 0 0 20px rgba(209, 18, 28, 0.05), 0 4px 15px rgba(0,0,0,0.5);
-        }
+        body.retro-bg #app-wrapper { background-color: #0c0202; background-image: radial-gradient(rgba(209, 18, 28, 0.1) 1px, transparent 0), radial-gradient(rgba(209, 18, 28, 0.1) 1px, transparent 0); }
+        body.retro-bg .glass-card { background: linear-gradient(135deg, rgba(30, 5, 5, 0.7), rgba(10, 0, 0, 0.8)); border: 1px solid rgba(209, 18, 28, 0.25); box-shadow: inset 0 0 20px rgba(209, 18, 28, 0.05), 0 4px 15px rgba(0,0,0,0.5); }
         body.retro-bg .text-gray-500 { color: #b45309; } 
         body.retro-bg .border-white\/5 { border-color: rgba(209, 18, 28, 0.15); }
-        body.retro-bg .dna-switch-track {
-            background: linear-gradient(180deg, rgba(40,5,5,0.9) 0%, rgba(15,0,0,0.9) 50%, rgba(40,5,5,0.9) 100%);
-            box-shadow: inset 0 2px 8px rgba(0,0,0,0.9), 0 1px 1px rgba(209,18,28,0.2);
-        }
+        body.retro-bg .dna-switch-track { background: linear-gradient(180deg, rgba(40,5,5,0.9) 0%, rgba(15,0,0,0.9) 50%, rgba(40,5,5,0.9) 100%); box-shadow: inset 0 2px 8px rgba(0,0,0,0.9), 0 1px 1px rgba(209,18,28,0.2); }
         
         .font-156-gauge { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; text-shadow: 0 0 12px rgba(209, 18, 28, 0.8); }
         .text-garage-red { color: #de000a; }
 
+        /* GPUアクセラレーション (アニメーションは物理エンジンに委任) */
         .gpu-accel { transform: translateZ(0); will-change: transform, width, stroke-dashoffset; }
-
-        .smooth-value { transition: none; }
-        #gauge-arc { transition: none; }
-        #hp-bar, #torque-bar, #big-boost-bar-rect { transition: none !important; }
+        .smooth-value, #gauge-arc, #hp-bar, #torque-bar, #big-boost-bar-rect { transition: none !important; }
 
         @keyframes rapid-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
         .animate-rapid { animation: rapid-pulse 0.15s infinite; }
         
         /* スタッフロール用アニメーション */
-        .mask-image-vertical {
-            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%);
-            mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%);
-        }
+        .mask-image-vertical { -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%); }
         @keyframes staff-roll { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
         .animate-staff-roll { animation: staff-roll 15s linear infinite; }
 
-        /* シフトフラッシュ用アニメーション */
+        /* フラッシュ/ワーニング */
         @keyframes border-flash { 0%, 100% { box-shadow: inset 0 0 0px rgba(209,18,28,0); } 50% { box-shadow: inset 0 0 80px rgba(209,18,28,0.85); } }
         .shift-flash-active { opacity: 1 !important; animation: border-flash 0.12s infinite; }
-
-        /* ワーニング用アニメーション */
         @keyframes warning-flash { 0%, 100% { border-color: rgba(209,18,28,0.5); background: rgba(255, 255, 255, 0.03); box-shadow: 0 0 0 rgba(209,18,28,0); } 50% { border-color: rgb(209,18,28); background: rgba(209,18,28,0.3); box-shadow: 0 0 25px rgba(209,18,28,0.9); } }
         .warning-active { animation: warning-flash 0.25s infinite !important; }
 
@@ -144,7 +127,7 @@
                 </svg>
                 <div class="absolute flex flex-col items-center justify-center text-center">
                     <span id="rpm-label" class="text-[8px] font-bold tracking-widest text-gray-500 font-mono">RPM</span>
-                    <span id="rpm-value" class="text-4xl font-bold font-mono tracking-tight text-white smooth-value leading-none mt-0.5">800</span>
+                    <span id="rpm-value" class="text-4xl font-bold font-mono tracking-tight text-white leading-none mt-0.5">800</span>
                     <div class="h-3.5 mt-1 flex items-center justify-center">
                         <span id="shift-indicator" class="hidden text-[7px] font-extrabold text-[#D1121C] animate-rapid tracking-wider"><i class="fa-solid fa-angles-up"></i> SHIFT UP</span>
                     </div>
@@ -160,9 +143,9 @@
                         <canvas id="g-canvas" width="144" height="144" class="w-full h-full bg-black/40 rounded-full border border-white/5 gpu-accel"></canvas>
                     </div>
                     <div class="flex-1 flex flex-col justify-center pl-3 gap-0.5 text-[7px] font-mono text-right">
-                        <div class="flex justify-between items-end"><span class="text-gray-500">LAT</span> <span id="lat-g-value" class="text-white font-bold leading-none smooth-value text-[8px]">0.00 G</span></div>
-                        <div class="flex justify-between items-end"><span class="text-gray-500">LNG</span> <span id="long-g-value" class="text-white font-bold leading-none smooth-value text-[8px]">0.00 G</span></div>
-                        <div class="flex justify-between items-end border-t border-white/5 pt-1 mt-0.5"><span class="text-amber-500">PEAK</span> <span id="peak-g-value" class="text-amber-400 font-bold leading-none smooth-value text-[8px]">0.00 G</span></div>
+                        <div class="flex justify-between items-end"><span class="text-gray-500">LAT</span> <span id="lat-g-value" class="text-white font-bold leading-none text-[8px]">0.00 G</span></div>
+                        <div class="flex justify-between items-end"><span class="text-gray-500">LNG</span> <span id="long-g-value" class="text-white font-bold leading-none text-[8px]">0.00 G</span></div>
+                        <div class="flex justify-between items-end border-t border-white/5 pt-1 mt-0.5"><span class="text-amber-500">PEAK</span> <span id="peak-g-value" class="text-amber-400 font-bold leading-none text-[8px]">0.00 G</span></div>
                     </div>
                 </div>
                 <div id="power-display-card" class="glass-card flex-1 p-2 flex flex-col justify-center relative pointer-events-auto">
@@ -174,7 +157,7 @@
                         <div class="flex flex-col gap-0.5">
                             <div class="flex justify-between items-end text-[6px] font-mono">
                                 <span class="text-amber-500/80 tracking-widest">POWER</span>
-                                <div class="flex items-baseline gap-0.5"><span id="hp-value" class="text-base font-bold text-white smooth-value leading-none">0</span> <span class="text-[6px] text-gray-500">PS</span></div>
+                                <div class="flex items-baseline gap-0.5"><span id="hp-value" class="text-base font-bold text-white leading-none">0</span> <span class="text-[6px] text-gray-500">PS</span></div>
                             </div>
                             <div class="w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10">
                                 <div id="hp-bar" class="gpu-accel h-full bg-gradient-to-r from-amber-600 to-amber-400" style="width: 0%;"></div>
@@ -183,7 +166,7 @@
                         <div class="flex flex-col gap-0.5">
                             <div class="flex justify-between items-end text-[6px] font-mono">
                                 <span class="text-orange-500/80 tracking-widest">TORQUE</span>
-                                <div class="flex items-baseline gap-0.5"><span id="torque-value" class="text-base font-bold text-white smooth-value leading-none">0</span> <span class="text-[6px] text-gray-500">Nm</span></div>
+                                <div class="flex items-baseline gap-0.5"><span id="torque-value" class="text-base font-bold text-white leading-none">0</span> <span class="text-[6px] text-gray-500">Nm</span></div>
                             </div>
                             <div class="w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10">
                                 <div id="torque-bar" class="gpu-accel h-full bg-gradient-to-r from-orange-600 to-orange-400" style="width: 0%;"></div>
@@ -200,7 +183,7 @@
             <div class="flex justify-between items-start mb-1 z-10 w-full relative pt-1 px-1">
                 <span class="text-[8px] font-bold font-mono tracking-widest text-gray-400 flex items-center gap-1"><i class="fa-solid fa-gauge-simple-high text-gray-500"></i> TURBO BOOST</span>
                 <div class="flex items-baseline gap-0.5 mt-[-4px]">
-                    <span id="big-boost-value" class="text-[26px] font-bold font-mono text-white leading-none smooth-value transition-colors duration-200">0.00</span>
+                    <span id="big-boost-value" class="text-[26px] font-bold font-mono text-white leading-none transition-colors duration-200">0.00</span>
                     <span class="text-[8px] text-gray-500 font-mono">BAR</span>
                 </div>
             </div>
@@ -224,23 +207,23 @@
         <div class="grid grid-cols-3 gap-2 w-full max-w-[380px] h-[48px] pointer-events-auto shrink-0 mt-0.5">
             <div id="speed-card" class="glass-card p-1.5 px-2 flex flex-col justify-between">
                 <div class="flex items-center justify-between text-gray-500 text-[6px] font-bold font-mono"><span>SPEED</span><i class="fa-solid fa-gauge-high text-white/20"></i></div>
-                <div class="flex items-baseline justify-between leading-none"><span id="speed-value" class="text-sm font-bold font-mono text-white leading-none smooth-value">0</span><span class="text-[5px] text-gray-500 font-semibold uppercase">km/h</span></div>
+                <div class="flex items-baseline justify-between leading-none"><span id="speed-value" class="text-sm font-bold font-mono text-white leading-none">0</span><span class="text-[5px] text-gray-500 font-semibold uppercase">km/h</span></div>
                 <div class="text-[5px] text-gray-500 font-mono flex justify-between border-t border-white/5 pt-0.5 mt-auto"><span>MAX</span><span id="peak-speed">0</span></div>
             </div>
             <div id="coolant-card" class="glass-card p-1.5 px-2 flex flex-col justify-between transition-colors duration-300">
                 <div class="flex items-center justify-between text-gray-500 text-[6px] font-bold font-mono"><span>COOLANT</span><i id="coolant-icon" class="fa-solid fa-thermometer-half text-green-500/70"></i></div>
-                <div class="flex items-baseline justify-between leading-none"><span id="coolant-value" class="text-sm font-bold font-mono text-white leading-none smooth-value">85</span><span class="text-[5px] text-gray-500 font-semibold uppercase">°C</span></div>
+                <div class="flex items-baseline justify-between leading-none"><span id="coolant-value" class="text-sm font-bold font-mono text-white leading-none">85</span><span class="text-[5px] text-gray-500 font-semibold uppercase">°C</span></div>
                 <div class="text-[5px] text-gray-500 font-mono flex justify-between border-t border-white/5 pt-0.5 mt-auto"><span>MAX</span><span id="peak-coolant">85</span></div>
             </div>
             <div id="dynamic-card" class="glass-card p-1.5 px-2 flex flex-col justify-between">
                 <div class="flex items-center justify-between text-gray-500 text-[6px] font-bold font-mono"><span id="dynamic-card-title">INTAKE</span><i id="dynamic-card-icon" class="fa-solid fa-wind text-cyan-400/70"></i></div>
-                <div class="flex items-baseline justify-between leading-none"><span id="dynamic-card-value" class="text-sm font-bold font-mono text-white leading-none smooth-value">24</span><span id="dynamic-card-unit" class="text-[5px] text-gray-500 font-semibold uppercase">°C</span></div>
+                <div class="flex items-baseline justify-between leading-none"><span id="dynamic-card-value" class="text-sm font-bold font-mono text-white leading-none">24</span><span id="dynamic-card-unit" class="text-[5px] text-gray-500 font-semibold uppercase">°C</span></div>
                 <div class="text-[5px] text-gray-500 font-mono flex justify-between border-t border-white/5 pt-0.5 mt-auto"><span>MAX</span><span id="peak-dynamic">24</span></div>
             </div>
         </div>
     </main>
 
-    <!-- 右カラム (コンソール) -->
+    <!-- 右カラム -->
     <aside class="w-[23%] max-w-[210px] flex flex-col justify-between py-0.5 relative z-10">
         <div id="panel-console" class="flex-1 rounded-xl bg-black/90 border border-white/5 overflow-hidden flex flex-col h-full pointer-events-auto">
             <div class="bg-zinc-900/60 p-1.5 text-[8px] font-bold text-gray-500 font-mono tracking-wider border-b border-white/5 flex justify-between items-center">
@@ -257,7 +240,23 @@
     </aside>
 </div>
 
-<!-- API設定モーダル -->
+<!-- ★ V33 FIX: Gセンサー誘導モーダル追加 -->
+<div id="g-sensor-modal" class="hidden fixed inset-0 bg-black/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="w-full max-w-sm glass-card bg-zinc-950/95 border-blue-500/20 p-5 shadow-2xl flex flex-col gap-4 text-center">
+        <div class="text-blue-400 text-3xl mb-2 animate-bounce"><i class="fa-solid fa-mobile-screen-button"></i></div>
+        <h3 class="font-bold text-sm tracking-widest text-white">G-SENSOR ACTIVATION</h3>
+        <p class="text-[10px] text-gray-400 leading-relaxed">
+            OBDとの接続が確立しました。<br>
+            正確なGフォースを計測するため、スマートフォンをホルダーに固定し、センサーを有効にしてください。
+        </p>
+        <div class="flex gap-2 mt-2">
+            <button onclick="skipGSensor()" class="flex-1 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-gray-300 text-[10px] font-bold font-mono tracking-widest transition-all">SKIP</button>
+            <button onclick="enableGSensor()" class="flex-[2] py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)]">ENABLE & CALIBRATE</button>
+        </div>
+    </div>
+</div>
+
+<!-- 設定モーダル -->
 <div id="settings-modal" class="hidden fixed inset-0 bg-black/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="w-full max-w-sm glass-card bg-zinc-950/95 border-gray-500/20 p-5 shadow-2xl flex flex-col gap-4">
         <div class="flex justify-between items-center border-b border-white/5 pb-2">
@@ -311,7 +310,6 @@
 </div>
 
 <script>
-    // --- 画面スケーリング制御 ---
     function applyScreenScale() {
         const wrapper = document.getElementById('app-wrapper');
         const targetWidth = 852; const targetHeight = 393;
@@ -357,39 +355,41 @@
         } catch (e) {}
     }
 
+    // ★ Gセンサーの制御関数
+    function skipGSensor() { document.getElementById('g-sensor-modal').classList.add('hidden'); }
+    async function enableGSensor() {
+        document.getElementById('g-sensor-modal').classList.add('hidden');
+        await calibrateGForce();
+    }
+
     function openSettings() { document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key') || ""; document.getElementById('settings-modal').classList.remove('hidden'); }
     function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-    function saveSettings() { localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value); closeSettings(); logConsole("API Key saved to device.", "system"); }
+    function saveSettings() { localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value); closeSettings(); logConsole("API Key saved.", "system"); }
 
     async function askGeminiMechanic() {
         const apiKey = localStorage.getItem('gemini_api_key');
         if (!apiKey) { alert("最初に右上の歯車アイコンから、Gemini API Keyを設定してください！"); return; }
         const aiBtn = document.getElementById('dtc-ai-btn'); const aiResponseArea = document.getElementById('ai-response-area'); const aiResponseText = document.getElementById('ai-response-text');
-        aiBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> THINKING...'; aiBtn.disabled = true; aiResponseArea.classList.remove('hidden'); aiResponseText.innerHTML = "AIメカニックがECUデータとテレメトリーを分析しています...";
+        aiBtn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> THINKING...'; aiBtn.disabled = true; aiResponseArea.classList.remove('hidden'); aiResponseText.innerHTML = "AIが分析中...";
 
         const prompt = `あなたはアルファロメオ・ジュリエッタ（1.4L マルチエア）を熟知したマスターメカニックです。
-以下のOBD2から取得したエラーコードと走行テレメトリーを分析し、トラブルの原因と次に点検すべき項目を短く、簡潔に、専門的に回答してください。（HTML不要、Markdownのみ使用可）
-[現在のテレメトリー最大値]
-- 最高回転数: ${peaks.rpm || data.rpm} RPM
-- 最高水温: ${peaks.coolant} °C
-- 最大ブースト圧: ${peaks.dynamic.toFixed(2)} Bar
-[検出されたエラーコード]
-${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${currentDiagnosticReport.faultName}` : "エラーコードは検出されていません。"}`;
+以下のOBD2データからトラブルの原因と点検項目を簡潔に回答してください。（Markdownのみ使用可）
+[現在の最大値] 回転数:${peaks.rpm||data.rpm}RPM / 水温:${peaks.coolant}℃ / ブースト:${peaks.dynamic.toFixed(2)}Bar
+[エラーコード] ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${currentDiagnosticReport.faultName}` : "エラーなし"}`;
 
         try {
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 250, temperature: 0.2 } }) });
             if (!response.ok) throw new Error("API通信エラー");
             const result = await response.json(); aiResponseText.innerHTML = result.candidates[0].content.parts[0].text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        } catch (error) { aiResponseText.innerHTML = `<span class="text-red-500">エラーが発生しました: ${error.message}</span>`; } finally { aiBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> ASK AI'; aiBtn.disabled = false; }
+        } catch (error) { aiResponseText.innerHTML = `<span class="text-red-500">エラー: ${error.message}</span>`; } finally { aiBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> ASK AI'; aiBtn.disabled = false; }
     }
 
-    // CSV保存モーダル
     function showTextDataModal(title, content) {
         const container = document.createElement('div');
         container.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;padding:max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)) 20px;box-sizing:border-box;';
-        container.innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:10px;align-items:center;"><h3 style="color:white;margin:0;font-family:monospace;font-size:12px;">${title}</h3><div style="display:flex;gap:10px;"><button id="modal-copy-close-btn" style="padding:8px 12px;background:#10b981;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;display:flex;align-items:center;gap:4px;"><i class="fa-solid fa-copy"></i> COPY & CLOSE</button><button id="modal-close-btn" style="padding:8px 12px;background:#D1121C;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;">✖</button></div></div><textarea id="modal-textarea" readonly style="flex:1;width:100%;background:#111;color:#0f0;font-family:monospace;font-size:10px;padding:10px;border:1px solid #333;border-radius:4px;white-space:pre;overflow:scroll;">${content}</textarea><div style="color:gray;font-size:10px;text-align:center;margin-top:10px;">※「COPY & CLOSE」を押し、iOSの「メモ」アプリ等にペーストして保存してください。</div>`;
+        container.innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:10px;align-items:center;"><h3 style="color:white;margin:0;font-family:monospace;font-size:12px;">${title}</h3><div style="display:flex;gap:10px;"><button id="modal-copy-close-btn" style="padding:8px 12px;background:#10b981;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;"><i class="fa-solid fa-copy"></i> COPY & CLOSE</button><button id="modal-close-btn" style="padding:8px 12px;background:#D1121C;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;">✖</button></div></div><textarea id="modal-textarea" readonly style="flex:1;width:100%;background:#111;color:#0f0;font-family:monospace;font-size:10px;padding:10px;border:1px solid #333;border-radius:4px;white-space:pre;overflow:scroll;">${content}</textarea>`;
         document.body.appendChild(container);
-        document.getElementById('modal-copy-close-btn').onclick = () => { const textarea = document.getElementById('modal-textarea'); textarea.select(); textarea.setSelectionRange(0, 999999); try { document.execCommand('copy'); document.body.removeChild(container); logConsole("CSVをクリップボードにコピーしました。メモ帳に貼り付けてください。", "system"); } catch (e) { alert('コピーに失敗しました。手動でコピーしてください。'); } };
+        document.getElementById('modal-copy-close-btn').onclick = () => { const textarea = document.getElementById('modal-textarea'); textarea.select(); textarea.setSelectionRange(0, 999999); try { document.execCommand('copy'); document.body.removeChild(container); logConsole("コピー完了", "system"); } catch (e) { alert('コピー失敗'); } };
         document.getElementById('modal-close-btn').onclick = () => { document.body.removeChild(container); };
     }
 
@@ -408,16 +408,16 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
     function stopCSVLogging() { if (csvLogTimer) clearInterval(csvLogTimer); }
     
     function exportCSVLog() {
-        if (telemetryData.length <= 1) { logConsole("保存するCSVデータがありません。", "error"); return; }
+        if (telemetryData.length <= 1) { logConsole("データなし", "error"); return; }
         const csvContent = telemetryData.join("\n"); const fileName = `Giulietta_Telemetry_${new Date().getTime()}.csv`;
         try {
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const file = new File([blob], fileName, { type: 'text/csv' });
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({ files: [file], title: 'Telemetry Data', text: 'Giulietta OBD Log' }).then(() => { logConsole("CSVを保存メニューに送りました。", "system"); playAlertSound(1100, 0.1); }).catch((e) => { showTextDataModal("📊 CSV TELEMETRY DATA", csvContent); logConsole("CSVデータを画面に表示しました。", "system"); });
+                navigator.share({ files: [file], title: 'Telemetry', text: 'Giulietta Log' }).then(() => { playAlertSound(1100, 0.1); }).catch((e) => { showTextDataModal("CSV DATA", csvContent); });
                 return;
             }
         } catch (e) { console.error(e); }
-        showTextDataModal("📊 CSV TELEMETRY DATA", csvContent); logConsole("CSVデータを表示しました。コピーして保存してください。", "system"); playAlertSound(1100, 0.1);
+        showTextDataModal("CSV DATA", csvContent); playAlertSound(1100, 0.1);
     }
 
     let currentMode = 'natural', isSimulation = true, simTime = 0, simulationInterval = null, isRetroSkin = false, pollTick = 0;
@@ -429,11 +429,18 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
     }
 
     let data = { rpm: 800, speed: 0, coolant: 85, intake: 24, boost: 0.0, map: 100, baro: 100, throttle: 0, pedal: 0, timing: 0, hp: 0, torque: 0 };
-    let animData = { rpm: 800, speed: 0, coolant: 85, intake: 24, boost: 0.0, hp: 0, torque: 0 };
     let peaks = { rpm: 0, speed: 0, coolant: 0, dynamic: 0.0, hp: 0, torque: 0 };
+    
+    // 物理スプリング・ダンパモデル（慣性アニメーション）
+    let phys = {
+        rpm: { val: 800, vel: 0 }, speed: { val: 0, vel: 0 }, boost: { val: 0, vel: 0 }, hp: { val: 0, vel: 0 }, torque: { val: 0, vel: 0 }, coolant: { val: 85, vel: 0 }, intake: { val: 24, vel: 0 }
+    };
 
     let bluetoothDevice = null, txCharacteristic = null, rxCharacteristic = null;
     let isWaitingForResponse = false, responseTimeoutTimer = null, rxBuffer = "", isDTCScanning = false; 
+
+    // ★ V33 FIX: フルバーストが通るかどうかのフラグ
+    let isMultiplexSupported = true; 
 
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     const colors = { alfaRed: '#D1121C', coolBlue: '#3B82F6', grayNatural: '#9CA3AF', garageRed: '#de000a' };
@@ -458,7 +465,7 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
 
     window.onload = function() { 
         setTimeout(() => window.scrollTo(0, 1), 500); initStaffRoll(); isRetroSkin = false; toggleRetroSkin(); setDNAMode('natural'); initGForceCanvas(); startSimulation(); 
-        requestAnimationFrame(renderLoop); logConsole("App Standby. ENGINE v31 (ULTIMATE SMOOTH EDITION)", "system"); 
+        requestAnimationFrame(renderLoop); logConsole("App Standby. ENGINE v33 (ULTIMATE SYNC EDITION)", "system"); 
     };
 
     let gCanvas = null, gCtx = null, lastDrawTime = 0;
@@ -500,6 +507,8 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
             try { if (await DeviceMotionEvent.requestPermission() === 'granted') window.addEventListener('devicemotion', handleMotion, true); } catch (e) {}
         } else { window.addEventListener('devicemotion', handleMotion, true); }
         gCalibrating = true; setTimeout(() => { gOffset.x = rawAcc.x; gOffset.y = rawAcc.y; gCalibrating = false; peakG = 0; peakG_coords = {x:0,y:0}; filteredG = {x:0, y:0}; }, 600);
+        logConsole("G-Sensor Calibrated.", "system");
+        playAlertSound(1000, 0.2);
     }
 
     function handleMotion(event) {
@@ -575,39 +584,65 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
         checkWarnings();
     }
 
-    // ★ V31 FIX: データが遅れても、針を滑らかに動かし続ける「慣性・予測補間 (Inertia Lerp)」
+    // ★ 60fps ゲームループ (物理スプリング・ダンパモデル)
     function renderLoop() {
-        // 通常のLerp（遅延なくシュッと追いつくための係数）
-        const lerp = (start, end, factor) => { let result = start + (end - start) * factor; if (Math.abs(result - end) < 0.001) result = end; return result; };
+        const updatePhysics = (key, target, stiffness, damping) => {
+            let force = (target - phys[key].val) * stiffness;
+            phys[key].vel = (phys[key].vel + force) * damping;
+            phys[key].val += phys[key].vel;
+            if (Math.abs(phys[key].vel) < 0.01 && Math.abs(target - phys[key].val) < 0.1) {
+                phys[key].vel = 0; phys[key].val = target;
+            }
+        };
+
+        // レスポンスの鋭さと滑らかさの両立
+        updatePhysics('rpm', data.rpm, 0.10, 0.75);
+        updatePhysics('boost', data.boost, 0.12, 0.70);
+        updatePhysics('speed', data.speed, 0.05, 0.85);
+        updatePhysics('hp', data.hp, 0.08, 0.75);
+        updatePhysics('torque', data.torque, 0.08, 0.75);
+        updatePhysics('coolant', data.coolant, 0.02, 0.90);
+        updatePhysics('intake', data.intake, 0.02, 0.90);
+
+        rpmText.textContent = Math.round(phys.rpm.val); 
+        speedText.textContent = Math.round(phys.speed.val); 
+        coolantText.textContent = Math.round(phys.coolant.val);
         
-        // データが遅れた時に、カクカクさせず予測して針を進め続ける魔法の係数
-        const f_rpm = 0.25;    
-        const f_boost = 0.30;  
-        const slowF = 0.05;    
-
-        animData.rpm = lerp(animData.rpm, data.rpm, f_rpm); 
-        animData.speed = lerp(animData.speed, data.speed, f_rpm); 
-        animData.coolant = lerp(animData.coolant, data.coolant, slowF); 
-        animData.intake = lerp(animData.intake, data.intake, slowF); 
-        animData.boost = lerp(animData.boost, data.boost, f_boost); 
-        animData.hp = lerp(animData.hp, data.hp, f_rpm); 
-        animData.torque = lerp(animData.torque, data.torque, f_rpm);
-
-        rpmText.textContent = Math.round(animData.rpm); speedText.textContent = Math.round(animData.speed); coolantText.textContent = Math.round(animData.coolant);
-        if (currentMode === 'dynamic') { dynamicValue.textContent = animData.boost.toFixed(2); } else { dynamicValue.textContent = Math.round(animData.intake); }
-        gaugeArc.style.strokeDashoffset = 534 - (Math.min(animData.rpm / 8000, 1.0) * 534);
+        if (currentMode === 'dynamic') { dynamicValue.textContent = phys.boost.val.toFixed(2); } 
+        else { dynamicValue.textContent = Math.round(phys.intake.val); }
+        
+        gaugeArc.style.strokeDashoffset = 534 - (Math.min(phys.rpm.val / 8000, 1.0) * 534);
 
         const hpBar = document.getElementById('hp-bar'); const torqueBar = document.getElementById('torque-bar');
-        document.getElementById('hp-value').textContent = Math.round(animData.hp); document.getElementById('torque-value').textContent = Math.round(animData.torque);
-        if(hpBar) hpBar.style.width = `${Math.min(animData.hp / 220 * 100, 100)}%`; if(torqueBar) torqueBar.style.width = `${Math.min(animData.torque / 350 * 100, 100)}%`;
+        document.getElementById('hp-value').textContent = Math.round(phys.hp.val); 
+        document.getElementById('torque-value').textContent = Math.round(phys.torque.val);
+        
+        if(hpBar) hpBar.style.width = `${Math.min(phys.hp.val / 220 * 100, 100)}%`; 
+        if(torqueBar) torqueBar.style.width = `${Math.min(phys.torque.val / 350 * 100, 100)}%`;
 
-        const bigBoostValue = document.getElementById('big-boost-value'); const bigBoostBarRect = document.getElementById('big-boost-bar-rect');
-        if (bigBoostValue) bigBoostValue.textContent = animData.boost.toFixed(2);
+        const bigBoostValue = document.getElementById('big-boost-value'); 
+        const bigBoostBarRect = document.getElementById('big-boost-bar-rect');
+        
+        if (bigBoostValue) bigBoostValue.textContent = phys.boost.val.toFixed(2);
         if (bigBoostBarRect) {
-            const percentage = Math.min(animData.boost / 1.5 * 100, 100); bigBoostBarRect.style.width = `${percentage}%`;
-            if (animData.boost < 1.0) { bigBoostBarRect.setAttribute('fill', 'url(#boost-grad-normal)'); bigBoostBarRect.style.filter = "drop-shadow(0 0 6px rgba(255,255,255,0.6))"; bigBoostValue.style.color = "#ffffff"; } 
-            else if (animData.boost < 1.3) { bigBoostBarRect.setAttribute('fill', '#facc15'); bigBoostBarRect.style.filter = "drop-shadow(0 0 10px rgba(250,204,21,0.8))"; bigBoostValue.style.color = "#facc15"; } 
-            else { bigBoostBarRect.setAttribute('fill', '#dc2626'); bigBoostBarRect.style.filter = "drop-shadow(0 0 15px rgba(220,38,38,0.9))"; bigBoostValue.style.color = "#dc2626"; }
+            const percentage = Math.min(phys.boost.val / 1.5 * 100, 100); 
+            bigBoostBarRect.style.width = `${percentage}%`;
+            
+            if (phys.boost.val < 1.0) { 
+                bigBoostBarRect.setAttribute('fill', 'url(#boost-grad-normal)'); 
+                bigBoostBarRect.style.filter = "drop-shadow(0 0 6px rgba(255,255,255,0.6))"; 
+                bigBoostValue.style.color = "#ffffff"; 
+            } 
+            else if (phys.boost.val < 1.3) { 
+                bigBoostBarRect.setAttribute('fill', '#facc15'); 
+                bigBoostBarRect.style.filter = "drop-shadow(0 0 10px rgba(250,204,21,0.8))"; 
+                bigBoostValue.style.color = "#facc15"; 
+            } 
+            else { 
+                bigBoostBarRect.setAttribute('fill', '#dc2626'); 
+                bigBoostBarRect.style.filter = "drop-shadow(0 0 15px rgba(220,38,38,0.9))"; 
+                bigBoostValue.style.color = "#dc2626"; 
+            }
         }
         requestAnimationFrame(renderLoop);
     }
@@ -618,10 +653,18 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
         if (simulationInterval) clearInterval(simulationInterval);
         
         simulationInterval = setInterval(() => {
-            simTime += 0.1; data.rpm = 3800 + Math.sin(simTime) * 3000; data.speed = 40 + Math.sin(simTime) * 20; data.boost = Math.max(0, Math.sin(simTime) * 1.6); data.coolant = 85 + Math.sin(simTime * 0.2) * 15; data.baro = 101; data.pedal = (data.rpm > 1500) ? Math.min(100, 50 + Math.sin(simTime)*60) : 0; data.throttle = (data.boost > 1.2) ? 20 : data.pedal; data.timing = 15 + Math.sin(simTime)*5;
+            simTime += 0.4; 
+            data.rpm = 3800 + Math.sin(simTime) * 3000; 
+            data.speed = 40 + Math.sin(simTime) * 20; 
+            data.boost = Math.max(0, Math.sin(simTime) * 1.6); 
+            data.coolant = 85 + Math.sin(simTime * 0.2) * 15; 
+            data.baro = 101; 
+            data.pedal = (data.rpm > 1500) ? Math.min(100, 50 + Math.sin(simTime)*60) : 0; 
+            data.throttle = (data.boost > 1.2) ? 20 : data.pedal; 
+            data.timing = 15 + Math.sin(simTime)*5;
             currentG.x = Math.sin(simTime * 1.5) * 0.45; currentG.y = (data.speed / 100) * 0.35 + (Math.sin(simTime * 0.8) > 0 ? 0.3 : -0.2); 
             processEngineData();
-        }, 50); 
+        }, 400); 
     }
     function stopSimulation() { if (simulationInterval) clearInterval(simulationInterval); }
 
@@ -655,7 +698,6 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
             await sendELMCommand("ATE0\r"); await delay(200); 
             await sendELMCommand("ATH0\r"); await delay(200); 
             await sendELMCommand("ATS0\r"); await delay(200); 
-            await sendELMCommand("ATAL\r"); await delay(200); 
             await sendELMCommand("ATSP0\r"); await delay(200);
             
             isSimulation = false; stopSimulation();
@@ -663,7 +705,10 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
             statusIndicator.className = "w-1.5 h-1.5 rounded-full bg-green-500"; connectionStatusText.textContent = "OBD Ready";
             
             debugFullLogs = []; isWaitingForResponse = false; rxBuffer = "";
-            logConsole("Init complete. ULTRA-STABLE polling started.", "system");
+            logConsole("Init complete. ULTRA BURST started.", "system");
+
+            // ★ V33 FIX: 接続成功後にGセンサーの有効化を促すモーダルを表示
+            document.getElementById('g-sensor-modal').classList.remove('hidden');
 
             startCSVLogging();
             pollNextOBDCommand();
@@ -672,7 +717,6 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
 
     async function sendELMCommand(command) {
         if (!txCharacteristic) return;
-        // logConsole(command.trim(), "tx"); // 高速化のためTXログは無効化
         try {
             if (txCharacteristic.properties.writeWithoutResponse) { await txCharacteristic.writeValueWithoutResponse(new TextEncoder().encode(command)); } 
             else { await txCharacteristic.writeValue(new TextEncoder().encode(command)); }
@@ -684,22 +728,20 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
 
         isWaitingForResponse = true; pollTick++; let nextCmd = "";
         
-        // ★ V31 FIX: フリーズを引き起こす不正なマルチPIDを撤廃。安全で最速な Ping-Pong スケジューリング
-        if (pollTick % 10 === 0) {
-            // 10回に1回だけ、その他のセンサーを1つだけ取得する (安全確実)
-            let slowCycle = (Math.floor(pollTick / 10)) % 6;
-            if (slowCycle === 0) nextCmd = "010D1";      // Speed
-            else if (slowCycle === 1) nextCmd = "01051"; // Coolant
-            else if (slowCycle === 2) nextCmd = "010F1"; // Intake
-            else if (slowCycle === 3) nextCmd = "01111"; // Throttle
-            else if (slowCycle === 4) nextCmd = "01491"; // Pedal
-            else if (slowCycle === 5) nextCmd = "010E1"; // Timing
-        } else {
-            // 残りの90%は、RPMとMAPを交互に高速連射
-            if (pollTick % 2 === 0) {
-                nextCmd = "010B1"; // Boost (MAP)
+        // ★ V33 FIX: 究極の「全データ一括要求(フルバースト)」とスマート・フォールバック
+        if (isMultiplexSupported) {
+            // フルバーストモード: 一発で主要な6種類のデータを全て要求する
+            if (pollTick % 5 !== 0) {
+                nextCmd = "010C0B0D11490E"; 
             } else {
-                nextCmd = "010C1"; // RPM
+                nextCmd = "01050F33"; 
+            }
+        } else {
+            // フォールバックモード: ECUがフルバーストを拒否した場合は、絶対にエラーにならない3つずつの分割要求に自動で切り替える
+            if (pollTick % 2 === 0) {
+                nextCmd = "010C0B0D"; 
+            } else {
+                nextCmd = "0111490E"; 
             }
         }
         
@@ -716,12 +758,17 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
         const text = new TextDecoder().decode(event.target.value);
         rxBuffer += text;
 
-        // ★ V31 FIX: データの到着完了(>)を確実にキャッチしてから次へ進む
         if (rxBuffer.includes('>')) {
             const cleanResponse = rxBuffer.replace(/[\r\n>]/g, '').trim();
             
-            if (cleanResponse.length > 0 && !cleanResponse.includes("?")) {
-                if(!cleanResponse.includes("NODATA") && !cleanResponse.includes("ERROR")) {
+            if (cleanResponse.length > 0) {
+                // ★ V33 FIX: エラー検知＆スマート・フォールバック
+                if (cleanResponse.includes("?")) {
+                    if (isMultiplexSupported) {
+                        isMultiplexSupported = false; // フルバーストを諦め、即座に安全モードに切り替える
+                        logConsole("ECU rejected Full-Burst. Falling back to Safe Mode.", "error");
+                    }
+                } else if(!cleanResponse.includes("NODATA") && !cleanResponse.includes("ERROR")) {
                     if (!isDTCScanning) parseOBDResponse(cleanResponse);
                 }
             }
@@ -737,25 +784,48 @@ ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${c
         }
     }
 
-    // ★ V31 FIX: 安定性の高いシンプルなパーサーに戻す
     function parseOBDResponse(response) {
         const clean = response.replace(/\s+/g, ''); if (!clean.startsWith("41")) return;
-        const pid = clean.substring(2, 4); const dataBytes = clean.substring(4);
         
-        if (pid === "0C" && dataBytes.length >= 4) { data.rpm = (256 * parseInt(dataBytes.substring(0, 2), 16) + parseInt(dataBytes.substring(2, 4), 16)) / 4; }
-        else if (pid === "0D" && dataBytes.length >= 2) { data.speed = parseInt(dataBytes.substring(0, 2), 16); }
-        else if (pid === "05" && dataBytes.length >= 2) { data.coolant = parseInt(dataBytes.substring(0, 2), 16) - 40; }
-        else if (pid === "0F" && dataBytes.length >= 2) { data.intake = parseInt(dataBytes.substring(0, 2), 16) - 40; }
-        else if (pid === "33" && dataBytes.length >= 2) { data.baro = parseInt(dataBytes.substring(0, 2), 16); }
-        else if (pid === "11" && dataBytes.length >= 2) { data.throttle = parseInt(dataBytes.substring(0, 2), 16) * 100 / 255; }
-        else if (pid === "49" && dataBytes.length >= 2) { data.pedal = parseInt(dataBytes.substring(0, 2), 16) * 100 / 255; }
-        else if (pid === "0E" && dataBytes.length >= 2) { data.timing = (parseInt(dataBytes.substring(0, 2), 16) / 2) - 64; }
-        else if (pid === "0B" && dataBytes.length >= 2) { 
-            let mapKpa = parseInt(dataBytes.substring(0, 2), 16);
-            data.map = mapKpa; 
-            data.boost = Math.max(0, (mapKpa - data.baro) / 100.0); 
+        // 複数PIDの応答を動的に切り分ける
+        let isDataUpdated = false;
+        let pIndex = clean.indexOf('41');
+        
+        if (pIndex !== -1) {
+            let ptr = pIndex + 2;
+            while (ptr < clean.length) {
+                let pid = clean.substring(ptr, ptr + 2);
+                ptr += 2;
+                
+                let dataLength = 0; 
+                if (["0C"].includes(pid)) dataLength = 4;
+                else if (["0D", "05", "0F", "33", "11", "49", "0E", "0B"].includes(pid)) dataLength = 2;
+                else {
+                    let next41 = clean.indexOf('41', ptr);
+                    if (next41 !== -1) { ptr = next41 + 2; continue; } else { break; }
+                }
+
+                if (ptr + dataLength > clean.length) break;
+
+                let dataBytes = clean.substring(ptr, ptr + dataLength);
+                ptr += dataLength;
+
+                if (pid === "0C") { data.rpm = (256 * parseInt(dataBytes.substring(0, 2), 16) + parseInt(dataBytes.substring(2, 4), 16)) / 4; isDataUpdated = true; }
+                else if (pid === "0D") { data.speed = parseInt(dataBytes, 16); isDataUpdated = true; }
+                else if (pid === "05") { data.coolant = parseInt(dataBytes, 16) - 40; isDataUpdated = true; }
+                else if (pid === "0F") { data.intake = parseInt(dataBytes, 16) - 40; isDataUpdated = true; }
+                else if (pid === "33") { data.baro = parseInt(dataBytes, 16); isDataUpdated = true; }
+                else if (pid === "11") { data.throttle = parseInt(dataBytes, 16) * 100 / 255; isDataUpdated = true; }
+                else if (pid === "49") { data.pedal = parseInt(dataBytes, 16) * 100 / 255; isDataUpdated = true; }
+                else if (pid === "0E") { data.timing = (parseInt(dataBytes, 16) / 2) - 64; isDataUpdated = true; }
+                else if (pid === "0B") { 
+                    let mapKpa = parseInt(dataBytes, 16); data.map = mapKpa; 
+                    data.boost = Math.max(0, (mapKpa - data.baro) / 100.0); 
+                    isDataUpdated = true;
+                }
+            }
         }
-        processEngineData();
+        if (isDataUpdated) { processEngineData(); }
     }
 
     function disconnectBluetooth() {
