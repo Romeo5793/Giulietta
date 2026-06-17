@@ -249,6 +249,32 @@
     </div>
 </div>
 
+<!-- ★ V44.3 ADD: Bluefy誘導モーダル -->
+<div id="ble-warning-modal" class="hidden fixed inset-0 bg-black/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+    <div class="w-full max-w-sm glass-card bg-zinc-950/95 border-amber-500/20 p-5 shadow-2xl flex flex-col gap-4 text-center">
+        <div class="text-amber-400 text-3xl mb-2 animate-pulse"><i class="fa-brands fa-bluetooth"></i></div>
+        <h3 class="font-bold text-sm tracking-widest text-white">WEB BLUETOOTH REQUIRED</h3>
+        <p class="text-[10px] text-gray-400 leading-relaxed text-left">
+            お使いのブラウザ（SafariやChrome等）はBluetooth通信に対応していません。<br><br>
+            iPhoneで車両と接続するには、無料のWeb BLE対応ブラウザ<strong>「Bluefy」</strong>アプリでこのページを開く必要があります。
+        </p>
+        <div class="flex flex-col gap-2 mt-2">
+            <button onclick="UI.openInBluefy()" class="w-full py-3 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)] flex items-center justify-center gap-2">
+                <i class="fa-solid fa-arrow-up-right-from-square text-lg"></i> OPEN IN BLUEFY
+            </button>
+            <a href="https://apps.apple.com/jp/app/bluefy-web-ble-browser/id1492822055" target="_blank" class="w-full py-2.5 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-bold font-mono tracking-widest transition-all flex items-center justify-center gap-2">
+                <i class="fa-brands fa-app-store-ios"></i> GET BLUEFY APP
+            </a>
+            <button onclick="UI.copyCurrentUrl(this)" class="w-full py-2.5 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-bold font-mono tracking-widest transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-link"></i> COPY APP URL
+            </button>
+            <button onclick="document.getElementById('ble-warning-modal').classList.add('hidden')" class="w-full py-1 mt-1 rounded bg-transparent text-gray-500 hover:text-white text-[10px] font-bold font-mono tracking-widest transition-all border border-gray-600">
+                CONTINUE IN DEMO MODE
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="settings-modal" class="hidden fixed inset-0 bg-black/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="w-full max-w-sm glass-card bg-zinc-950/95 border-gray-500/20 p-5 shadow-2xl flex flex-col gap-4">
         <div class="flex justify-between items-center border-b border-white/5 pb-2">
@@ -437,7 +463,34 @@ const UI = {
     },
     openSettings: function() { document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key') || ""; document.getElementById('settings-modal').classList.remove('hidden'); },
     closeSettings: function() { document.getElementById('settings-modal').classList.add('hidden'); },
-    saveSettings: function() { localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value); this.closeSettings(); this.log("API Key saved.", "system"); }
+    saveSettings: function() { localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value); this.closeSettings(); this.log("API Key saved.", "system"); },
+    
+    // ★ V44.3 ADD: URLコピー機能
+    copyCurrentUrl: function(btn) {
+        const url = window.location.href;
+        const dummy = document.createElement('textarea');
+        document.body.appendChild(dummy);
+        dummy.value = url;
+        dummy.select();
+        document.execCommand('copy');
+        document.body.removeChild(dummy);
+        
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> COPIED!';
+        btn.classList.add('text-green-400');
+        setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('text-green-400');
+        }, 2000);
+    },
+    
+    // ★ V44.4 ADD: Bluefyアプリを直接起動してURLを開く
+    openInBluefy: function() {
+        const url = window.location.href;
+        // https:// を bluefy:// に置換してアプリを起動
+        const bluefyUrl = url.replace(/^https?:\/\//i, 'bluefy://');
+        window.location.href = bluefyUrl;
+    }
 };
 
 /**
@@ -631,6 +684,11 @@ const OBD = {
     rxBuffer: "",
     
     toggleConnection: function() {
+        // ★ V44.3 ADD: ボタンを押した時もBluetooth非対応ならモーダルを出す
+        if (!navigator.bluetooth) {
+            document.getElementById('ble-warning-modal').classList.remove('hidden');
+            return;
+        }
         if (State.isSimulation) this.connect(); else this.disconnect();
     },
     connect: async function() {
@@ -994,7 +1052,14 @@ const App = {
         Sim.start();
         
         requestAnimationFrame((now) => Engine.loop(now));
-        UI.log("App Boot Sequence Complete. REBORN ENGINE v44", "system");
+        UI.log("App Boot Sequence Complete. REBORN ENGINE v44.3", "system");
+
+        // ★ V44.3 ADD: 起動時にWeb Bluetoothのサポートをチェックし、非対応なら1秒後にモーダル表示
+        if (!navigator.bluetooth) {
+            setTimeout(() => {
+                document.getElementById('ble-warning-modal').classList.remove('hidden');
+            }, 1000);
+        }
     }
 };
 
