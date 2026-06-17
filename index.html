@@ -19,7 +19,7 @@
         .font-mono { font-family: 'Share Tech Mono', monospace; }
         .font-serif-brand { font-family: 'Cinzel', serif; }
         .font-cursive-alfa { font-family: 'Great Vibes', cursive; }
-        .font-garage-logo { font-family: 'Archivo Black', sans-serif; } /* ★追加: 汎用スキン用フォント */
+        .font-archivo { font-family: 'Archivo Black', sans-serif; }
         
         /* Base Theme */
         .carbon-bg { background-image: radial-gradient(rgba(255,255,255,0.015) 1px, transparent 0), radial-gradient(rgba(255,255,255,0.015) 1px, transparent 0); background-size: 8px 8px; background-position: 0 0, 4px 4px; transition: background 0.5s ease; }
@@ -36,6 +36,7 @@
         .font-156-gauge { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; text-shadow: 0 0 12px rgba(209, 18, 28, 0.8); }
         .text-garage-red { color: #de000a; }
 
+        /* Disable CSS Transitions for JS Animation Engine */
         .gpu-accel { transform: translateZ(0); will-change: transform, width, stroke-dashoffset; }
         .smooth-value, #gauge-arc, #hp-bar, #torque-bar, #big-boost-bar-rect { transition: none !important; }
 
@@ -54,7 +55,7 @@
         .markdown-body ul { list-style-type: disc; padding-left: 1rem; margin-top: 0.5rem; }
     </style>
 </head>
-<body class="bg-black">
+<body class="bg-black retro-bg">
 
 <div id="app-wrapper" class="carbon-bg p-3 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
     
@@ -66,7 +67,7 @@
             <div class="flex justify-between items-center w-full">
                 <h1 id="brand-logo" class="cursor-pointer hover:opacity-80 transition-opacity" onclick="App.toggleSkin()"></h1>
                 <div class="flex gap-2.5">
-                    <button onclick="App.toggleSkin()" class="text-gray-500 hover:text-white transition-all text-xs" title="アルファロメオテーマ切替"><i class="fa-solid fa-palette"></i></button>
+                    <button onclick="App.toggleSkin()" class="text-gray-500 hover:text-white transition-all text-xs" title="テーマ切替"><i class="fa-solid fa-palette"></i></button>
                     <button onclick="UI.openSettings()" class="text-gray-500 hover:text-white transition-all text-xs" title="設定"><i class="fa-solid fa-gear"></i></button>
                 </div>
             </div>
@@ -249,12 +250,13 @@
     </div>
 </div>
 
+<!-- Bluefy誘導モーダル -->
 <div id="ble-warning-modal" class="hidden fixed inset-0 bg-black/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
     <div class="w-full max-w-sm glass-card bg-zinc-950/95 border-amber-500/20 p-5 shadow-2xl flex flex-col gap-4 text-center">
         <div class="text-amber-400 text-3xl mb-2 animate-pulse"><i class="fa-brands fa-bluetooth"></i></div>
         <h3 class="font-bold text-sm tracking-widest text-white">WEB BLUETOOTH REQUIRED</h3>
         <p class="text-[10px] text-gray-400 leading-relaxed text-left">
-            お使いのブラウザはBluetooth通信に対応していません。<br><br>
+            お使いのブラウザ（SafariやChrome等）はBluetooth通信に対応していません。<br><br>
             iPhoneで車両と接続するには、無料のWeb BLE対応ブラウザ<strong>「Bluefy」</strong>アプリでこのページを開く必要があります。
         </p>
         <div class="flex flex-col gap-2 mt-2">
@@ -328,7 +330,7 @@
 const State = {
     mode: 'natural',
     isSimulation: true,
-    isRetroSkin: false, // ★ V44.7 デフォルトを汎用スキンに変更
+    isRetroSkin: false, // ★ V45.2 FIX: 内部状態を初期からGarageRedに設定
     isConnected: false,
     isDTCScanning: false,
     lastWarningTime: 0
@@ -336,6 +338,17 @@ const State = {
 
 // カラーパレット
 const colors = { alfaRed: '#D1121C', coolBlue: '#3B82F6', grayNatural: '#9CA3AF', garageRed: '#de000a' };
+
+// 必須の変数群（V45.1で復旧したもの）
+let bluetoothDevice = null;
+let txCharacteristic = null;
+let rxCharacteristic = null;
+let isWaitingForResponse = false;
+let telemetryData = [];
+let gCalibrating = false;
+
+const TARGET_SERVICE_UUIDS = ['0000fff0-0000-1000-8000-00805f9b34fb', '0000ffe0-0000-1000-8000-00805f9b34fb'];
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // 実際の車のデータ (目標値)
 const CarData = {
@@ -352,7 +365,7 @@ const AnimData = {
     torque: { val: 0, vel: 0 },
     coolant: { val: 85, vel: 0 },
     intake: { val: 24, vel: 0 },
-    gX: { val: 0 },
+    gX: { val: 0 }, // GセンサーはLPFで処理するためvelは不要
     gY: { val: 0 }
 };
 
@@ -464,6 +477,7 @@ const UI = {
     closeSettings: function() { document.getElementById('settings-modal').classList.add('hidden'); },
     saveSettings: function() { localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value); this.closeSettings(); this.log("API Key saved.", "system"); },
     
+    // Bluefy誘導関連
     copyCurrentUrl: function(btn) {
         const url = window.location.href;
         const dummy = document.createElement('textarea');
@@ -481,7 +495,6 @@ const UI = {
             btn.classList.remove('text-green-400');
         }, 2000);
     },
-    
     openInBluefy: function() {
         const url = window.location.href;
         const bluefyUrl = url.replace(/^https?:\/\//i, 'bluefy://');
@@ -495,18 +508,19 @@ const UI = {
  * ==========================================
  */
 const Engine = {
-    // 【物理スプリング演算】V33.1ベース：自然な減衰のみ（強制停止処理なし）
+    // 【物理スプリング演算】バネモデル (スナップ処理完全撤廃)
     updatePhysics: function(key, target, stiffness, damping) {
         let force = (target - AnimData[key].val) * stiffness;
         AnimData[key].vel = (AnimData[key].vel + force) * damping;
         AnimData[key].val += AnimData[key].vel;
     },
+    // 【LPF演算】Gセンサー用の滑らかなフィルター
     updateLPF: function(key, target, alpha) {
         AnimData[key].val += (target - AnimData[key].val) * alpha;
     },
     
     loop: function(now) {
-        // メーター類を物理バネエンジンで滑らかに動かす
+        // メーター類の物理演算
         this.updatePhysics('rpm', CarData.rpm, 0.08, 0.80);
         this.updatePhysics('boost', CarData.boost, 0.10, 0.75);
         this.updatePhysics('speed', CarData.speed, 0.04, 0.85);
@@ -523,6 +537,7 @@ const Engine = {
 
         this.updateDOM();
         
+        // Gセンサーレーダーの軌跡保存と描画
         if (now - lastGHistoryTime > 60) {
             gHistory.push({ x: AnimData.gX.val, y: AnimData.gY.val });
             if (gHistory.length > MAX_G_HISTORY) gHistory.shift();
@@ -637,8 +652,9 @@ const Sim = {
         UI.els['status-indicator'].className = "w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"; UI.els['connection-status'].textContent = "Demo Mode";
         if (this.timer) clearInterval(this.timer);
         
+        // ★ V45.3 FIX: デモモードの更新頻度を150msから、最も滑らかだった50msに完全復元
         this.timer = setInterval(() => {
-            this.time += 0.15;
+            this.time += 0.05;
             CarData.rpm = 3800 + Math.sin(this.time) * 3000;
             CarData.speed = 40 + Math.sin(this.time) * 20;
             CarData.boost = Math.max(0, Math.sin(this.time) * 1.6);
@@ -654,11 +670,16 @@ const Sim = {
             if (mag > GPeak) { GPeak = mag; GPeakCoords = {x: this.g.x, y: this.g.y}; UI.els['peak-g-value'].textContent = GPeak.toFixed(2) + " G"; }
             
             Calc.processEngineData();
-        }, 150);
+        }, 50);
     },
     stop: function() { if(this.timer) clearInterval(this.timer); }
 };
 
+/**
+ * =========================================================
+ * 5. OBD-II BLE 通信モジュール (Ping-Pong Polling)
+ * =========================================================
+ */
 const OBD = {
     pollTick: 0,
     timeoutTimer: null,
@@ -794,6 +815,78 @@ const OBD = {
 
 /**
  * =========================================================
+ * 6. Gセンサー モジュール (G-Force Input)
+ * =========================================================
+ */
+const GForce = {
+    skip: function() { document.getElementById('g-sensor-modal').classList.add('hidden'); },
+    enable: async function() { 
+        document.getElementById('g-sensor-modal').classList.add('hidden'); 
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            try { if (await DeviceMotionEvent.requestPermission() === 'granted') window.addEventListener('devicemotion', this.onMotion.bind(this), true); } catch (e) {}
+        } else { window.addEventListener('devicemotion', this.onMotion.bind(this), true); }
+        gCalibrating = true; 
+        setTimeout(() => { GOffset.x = rawAcc.x; GOffset.y = rawAcc.y; gCalibrating = false; GPeak = 0; GPeakCoords = {x:0,y:0}; FilteredG.x=0; FilteredG.y=0; }, 600);
+        UI.log("G-Sensor Calibrated.", "system"); Utils.playBeep(1000, 0.2);
+    },
+    onMotion: function(event) {
+        if (!event.accelerationIncludingGravity) return;
+        rawAcc.x = (event.accelerationIncludingGravity.y || 0) / 9.8; 
+        rawAcc.y = -(event.accelerationIncludingGravity.x || 0) / 9.8;
+        if (!gCalibrating && !State.isSimulation) {
+            currentG.x = rawAcc.x - GOffset.x; currentG.y = rawAcc.y - GOffset.y;
+            FilteredG.x += (currentG.x - FilteredG.x) * 0.20; 
+            FilteredG.y += (currentG.y - FilteredG.y) * 0.20;
+            let mag = Math.sqrt(FilteredG.x * FilteredG.x + FilteredG.y * FilteredG.y);
+            if (mag > GPeak) { GPeak = mag; GPeakCoords = {x: FilteredG.x, y: FilteredG.y}; UI.els['peak-g-value'].textContent = GPeak.toFixed(2) + " G"; }
+        }
+    }
+};
+
+/**
+ * =========================================================
+ * 7. CSV ロギング モジュール
+ * =========================================================
+ */
+const CSV = {
+    debugLogs: [],
+    timer: null,
+    start: function() {
+        telemetryData = ["Timestamp,RPM,Speed_kmh,Coolant_C,Intake_C,Baro_kPa,MAP_kPa,Boost_bar,Throttle_%,Pedal_%,Timing_deg,HP_PS,Torque_Nm,GLat,GLong"];
+        if (this.timer) clearInterval(this.timer);
+        this.timer = setInterval(() => {
+            if (!State.isSimulation && !State.isDTCScanning) {
+                const ts = new Date().toISOString();
+                const row = `${ts},${Math.round(CarData.rpm)},${Math.round(CarData.speed)},${Math.round(CarData.coolant)},${Math.round(CarData.intake)},${CarData.baro},${CarData.map},${CarData.boost.toFixed(2)},${Math.round(CarData.throttle)},${Math.round(CarData.pedal)},${CarData.timing.toFixed(1)},${Math.round(CarData.hp)},${Math.round(CarData.torque)},${FilteredG.x.toFixed(3)},${FilteredG.y.toFixed(3)}`;
+                telemetryData.push(row);
+            }
+        }, 100);
+    },
+    stop: function() { if (this.timer) clearInterval(this.timer); },
+    exportData: function() {
+        if (telemetryData.length <= 1) { UI.log("データなし", "error"); return; }
+        const csvContent = telemetryData.join("\n"); const fileName = `Giulietta_Telemetry_${new Date().getTime()}.csv`;
+        try {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const file = new File([blob], fileName, { type: 'text/csv' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({ files: [file], title: 'Telemetry', text: 'Giulietta Log' }).then(() => { Utils.playBeep(1100, 0.1); }).catch((e) => { this.showModal(csvContent); });
+                return;
+            }
+        } catch (e) { console.error(e); }
+        this.showModal(csvContent); Utils.playBeep(1100, 0.1);
+    },
+    showModal: function(content) {
+        const container = document.createElement('div');
+        container.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;padding:max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)) 20px;box-sizing:border-box;';
+        container.innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:10px;align-items:center;"><h3 style="color:white;margin:0;font-family:monospace;font-size:12px;">CSV DATA</h3><div style="display:flex;gap:10px;"><button id="modal-copy-close-btn" style="padding:8px 12px;background:#10b981;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;"><i class="fa-solid fa-copy"></i> COPY & CLOSE</button><button id="modal-close-btn" style="padding:8px 12px;background:#D1121C;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;">✖</button></div></div><textarea id="modal-textarea" readonly style="flex:1;width:100%;background:#111;color:#0f0;font-family:monospace;font-size:10px;padding:10px;border:1px solid #333;border-radius:4px;white-space:pre;overflow:scroll;">${content}</textarea>`;
+        document.body.appendChild(container);
+        document.getElementById('modal-copy-close-btn').onclick = () => { const textarea = document.getElementById('modal-textarea'); textarea.select(); textarea.setSelectionRange(0, 999999); try { document.execCommand('copy'); document.body.removeChild(container); UI.log("コピー完了", "system"); } catch (e) { alert('コピー失敗'); } };
+        document.getElementById('modal-close-btn').onclick = () => { document.body.removeChild(container); };
+    }
+};
+
+/**
+ * =========================================================
  * 8. DTC 診断モジュール (Deep Diagnostics)
  * =========================================================
  */
@@ -919,18 +1012,26 @@ const DTC = {
  * =========================================================
  */
 const App = {
-    toggleSkin: function() {
-        State.isRetroSkin = !State.isRetroSkin; document.body.classList.toggle('retro-bg', State.isRetroSkin);
+    // toggleSkinの引数に特定の状態を渡すことで、トグル式を維持しつつ初期状態を固定
+    toggleSkin: function(forceSkin = null) {
+        if (forceSkin !== null) {
+            State.isRetroSkin = forceSkin;
+        } else {
+            State.isRetroSkin = !State.isRetroSkin; 
+        }
+        
+        document.body.classList.toggle('retro-bg', State.isRetroSkin);
         const alfaEmblem = `<svg viewBox="0 0 100 100" class="w-9 h-9 drop-shadow-lg shrink-0"><circle cx="50" cy="50" r="48" fill="#0f172a" stroke="#d97706" stroke-width="2"/><circle cx="50" cy="50" r="40" fill="#f8fafc" stroke="#d97706" stroke-width="1"/><path d="M 50 10 A 40 40 0 0 0 50 90 Z" fill="#f8fafc"/><path d="M 50 10 A 40 40 0 0 1 50 90 Z" fill="#e0f2fe"/><rect x="18" y="44" width="32" height="12" fill="#b91c1c"/><rect x="28" y="18" width="12" height="64" fill="#b91c1c"/><path d="M 65 25 C 80 15, 90 35, 75 45 C 65 55, 85 65, 75 80 C 60 85, 55 65, 65 55 C 75 45, 50 35, 65 25 Z" fill="#15803d"/><path d="M 50 10 L 50 90" stroke="#d97706" stroke-width="1"/></svg>`;
         
         if (State.isRetroSkin) {
             UI.els['brand-logo'].innerHTML = `${alfaEmblem} <div class="flex flex-col items-start justify-center"><span class="font-serif-brand text-[8px] text-amber-500 leading-none tracking-widest uppercase">Alfa Romeo</span><span class="font-cursive-alfa text-red-600 leading-none mt-0.5">Giulietta</span></div>`;
-            UI.els['brand-logo'].className = "flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity drop-shadow-md"; UI.els['gauge-arc'].style.stroke = colors.alfaRed;
+            UI.els['brand-logo'].className = "flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity drop-shadow-md"; 
+            UI.els['gauge-arc'].style.stroke = colors.alfaRed;
             UI.els['dna-switch-container'].classList.remove('hidden'); UI.els['dna-switch-container'].classList.add('flex'); UI.els['brand-carousel-container'].classList.add('hidden'); UI.els['brand-carousel-container'].classList.remove('flex');
         } else {
-            // ★ V44.7 汎用スキンのGARAGEREDロゴ（フォントArchivo Black）
-            UI.els['brand-logo'].innerHTML = `<span class="text-xl font-garage-logo tracking-tighter">GARAGERED</span>`;
-            UI.els['brand-logo'].className = "text-xl font-garage-logo text-garage-red flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity drop-shadow-md"; UI.els['gauge-arc'].style.stroke = colors.garageRed;
+            UI.els['brand-logo'].innerHTML = `<span class="text-white text-sm"><i class="fa-solid fa-gauge-high"></i></span> <span class="tracking-[0.1em]" style="transform: translateY(1px);">GARAGERED</span>`;
+            UI.els['brand-logo'].className = "text-xl font-archivo text-garage-red flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity drop-shadow-md"; 
+            UI.els['gauge-arc'].style.stroke = colors.garageRed;
             UI.els['dna-switch-container'].classList.add('hidden'); UI.els['dna-switch-container'].classList.remove('flex'); UI.els['brand-carousel-container'].classList.remove('hidden'); UI.els['brand-carousel-container'].classList.add('flex');
         }
         UI.els['rpm-value'].className = State.isRetroSkin ? "text-[42px] font-156-gauge text-[#D1121C] leading-none mt-1" : "text-4xl font-bold font-mono tracking-tight text-white leading-none mt-0.5";
@@ -955,14 +1056,13 @@ const App = {
         const html = ['PORSCHE', 'BMW', 'MERCEDES', 'AUDI', 'VW', 'TOYOTA', 'NISSAN', 'HONDA', 'SUBARU', 'MAZDA', 'MCLAREN', 'FERRARI', 'ASTON MARTIN'].map(b => `<span class="text-[9px] font-bold font-mono tracking-widest text-gray-400 text-center">${b}</span>`).join('');
         if(UI.els['brand-carousel-container']) { document.getElementById('staff-roll-content-1').innerHTML=html; document.getElementById('staff-roll-content-2').innerHTML=html; }
         
-        // ★ V44.7 デフォルトで汎用スキンを適用
-        State.isRetroSkin = false;
-        this.toggleSkin();
+        // ★ V45.2 FIX: 起動時に確実に「GarageRedスキン」を適用する
+        this.toggleSkin(false); 
         this.setDNA('natural');
         Sim.start();
         
         requestAnimationFrame((now) => Engine.loop(now));
-        UI.log("App Boot Sequence Complete. REBORN ENGINE v44.7", "system");
+        UI.log("App Boot Sequence Complete. REBORN ENGINE v45.2", "system");
 
         if (!navigator.bluetooth) {
             setTimeout(() => {
