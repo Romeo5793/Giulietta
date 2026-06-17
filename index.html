@@ -500,13 +500,13 @@ const UI = {
  */
 const Engine = {
     // 【物理スプリング演算】最も評価が高かったバネモデル＋スナップ処理
-    updatePhysics: function(key, target, stiffness, damping, snapThreshold = 0.5) {
+    updatePhysics: function(key, target, stiffness, damping, snapThreshold = 0.5, velThreshold = 0.02) {
         let force = (target - AnimData[key].val) * stiffness;
         AnimData[key].vel = (AnimData[key].vel + force) * damping;
         AnimData[key].val += AnimData[key].vel;
         // スナップ（微細なプルプルを完全に止める）
-        // ★ V44.2 FIX: snapThresholdを引数化し、ブースト等の小数点スケールに対応
-        if (Math.abs(AnimData[key].vel) < 0.02 && Math.abs(target - AnimData[key].val) < snapThreshold) {
+        // ★ V44.5 FIX: 速度閾値(velThreshold)もスケールに合わせて引数化
+        if (Math.abs(AnimData[key].vel) < velThreshold && Math.abs(target - AnimData[key].val) < snapThreshold) {
             AnimData[key].vel = 0;
             AnimData[key].val = target;
         }
@@ -518,14 +518,14 @@ const Engine = {
     
     loop: function(now) {
         // メーター類の物理演算
-        // ★ V44.2 FIX: ブーストのみ、スナップ(ワープ)の閾値を 0.01 に極小化してパラパラ漫画を防止
-        this.updatePhysics('rpm', CarData.rpm, 0.08, 0.80, 0.5);
-        this.updatePhysics('boost', CarData.boost, 0.10, 0.75, 0.01);
-        this.updatePhysics('speed', CarData.speed, 0.04, 0.85, 0.5);
-        this.updatePhysics('hp', CarData.hp, 0.06, 0.80, 0.5);
-        this.updatePhysics('torque', CarData.torque, 0.06, 0.80, 0.5);
-        this.updatePhysics('coolant', CarData.coolant, 0.02, 0.90, 0.5);
-        this.updatePhysics('intake', CarData.intake, 0.02, 0.90, 0.5);
+        // ★ V44.5 FIX: ブーストは最大1.5という極小スケールのため、スナップの閾値と速度閾値を極小に設定し、カクつきを完全排除
+        this.updatePhysics('rpm', CarData.rpm, 0.08, 0.80, 0.5, 0.1);
+        this.updatePhysics('boost', CarData.boost, 0.10, 0.75, 0.005, 0.001);
+        this.updatePhysics('speed', CarData.speed, 0.04, 0.85, 0.2, 0.05);
+        this.updatePhysics('hp', CarData.hp, 0.06, 0.80, 0.5, 0.1);
+        this.updatePhysics('torque', CarData.torque, 0.06, 0.80, 0.5, 0.1);
+        this.updatePhysics('coolant', CarData.coolant, 0.02, 0.90, 0.1, 0.05);
+        this.updatePhysics('intake', CarData.intake, 0.02, 0.90, 0.1, 0.05);
 
         // Gセンサー専用のLPF演算
         let targetGX = State.isSimulation ? Sim.g.x : FilteredG.x;
