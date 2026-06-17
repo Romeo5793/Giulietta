@@ -135,7 +135,7 @@
             <!-- Gセンサー＆ダイナモ -->
             <div class="w-[180px] h-[180px] flex flex-col gap-2 pointer-events-none shrink-0">
                 <div id="g-sensor-card" class="glass-card flex-1 p-2 flex items-center justify-between relative pointer-events-auto overflow-hidden">
-                    <button onclick="GForce.calibrate()" class="absolute top-1.5 right-1.5 text-[6px] text-blue-400 border border-blue-400/20 px-1 rounded hover:bg-blue-400/10 transition-all uppercase z-10">CAL</button>
+                    <button onclick="GForce.enableAndCalibrate()" class="absolute top-1.5 right-1.5 text-[6px] text-blue-400 border border-blue-400/20 px-1 rounded hover:bg-blue-400/10 transition-all uppercase z-10">CAL</button>
                     <div class="w-[72px] h-[72px] flex items-center justify-center relative shrink-0">
                         <canvas id="g-canvas" width="144" height="144" class="w-full h-full bg-black/40 rounded-full border border-white/5 gpu-accel"></canvas>
                     </div>
@@ -245,7 +245,7 @@
         <p class="text-[10px] text-gray-400 leading-relaxed">OBDとの接続が確立しました。<br>正確なGフォースを計測するため、スマートフォンを固定し有効にしてください。</p>
         <div class="flex gap-2 mt-2">
             <button onclick="GForce.skip()" class="flex-1 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-gray-300 text-[10px] font-bold font-mono tracking-widest transition-all">SKIP</button>
-            <button onclick="GForce.enable()" class="flex-[2] py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)]">ENABLE & CALIBRATE</button>
+            <button onclick="GForce.enableAndCalibrate()" class="flex-[2] py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)]">ENABLE & CALIBRATE</button>
         </div>
     </div>
 </div>
@@ -260,9 +260,9 @@
             iPhoneで車両と接続するには、無料のWeb BLE対応ブラウザ<strong>「Bluefy」</strong>アプリでこのページを開く必要があります。
         </p>
         <div class="flex flex-col gap-2 mt-2">
-            <button onclick="UI.openInBluefy()" class="w-full py-3 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)] flex items-center justify-center gap-2">
+            <a id="btn-open-bluefy" href="#" target="_top" class="w-full py-3 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)] flex items-center justify-center gap-2">
                 <i class="fa-solid fa-arrow-up-right-from-square text-lg"></i> OPEN IN BLUEFY
-            </button>
+            </a>
             <a href="https://apps.apple.com/jp/app/bluefy-web-ble-browser/id1492822055" target="_blank" class="w-full py-2.5 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-bold font-mono tracking-widest transition-all flex items-center justify-center gap-2">
                 <i class="fa-brands fa-app-store-ios"></i> GET BLUEFY APP
             </a>
@@ -330,7 +330,7 @@
 const State = {
     mode: 'natural',
     isSimulation: true,
-    isRetroSkin: false, // ★ V45.2 FIX: 内部状態を初期からGarageRedに設定
+    isRetroSkin: false,
     isConnected: false,
     isDTCScanning: false,
     lastWarningTime: 0
@@ -339,7 +339,7 @@ const State = {
 // カラーパレット
 const colors = { alfaRed: '#D1121C', coolBlue: '#3B82F6', grayNatural: '#9CA3AF', garageRed: '#de000a' };
 
-// 必須の変数群（V45.1で復旧したもの）
+// 必須の変数群
 let bluetoothDevice = null;
 let txCharacteristic = null;
 let rxCharacteristic = null;
@@ -365,12 +365,13 @@ const AnimData = {
     torque: { val: 0, vel: 0 },
     coolant: { val: 85, vel: 0 },
     intake: { val: 24, vel: 0 },
-    gX: { val: 0 }, // GセンサーはLPFで処理するためvelは不要
+    gX: { val: 0 },
     gY: { val: 0 }
 };
 
-// Gセンサーデバイス入力用
-const RawG = { x: 0, y: 0 };
+// ★ V45.8 FIX: Gセンサーデバイス入力用変数を復元
+let rawAcc = { x: 0, y: 0 };
+let currentG = { x: 0, y: 0 };
 const FilteredG = { x: 0, y: 0 };
 let GOffset = { x: 0, y: 0 };
 let GPeak = 0;
@@ -477,28 +478,48 @@ const UI = {
     closeSettings: function() { document.getElementById('settings-modal').classList.add('hidden'); },
     saveSettings: function() { localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value); this.closeSettings(); this.log("API Key saved.", "system"); },
     
-    // Bluefy誘導関連
     copyCurrentUrl: function(btn) {
         const url = window.location.href;
-        const dummy = document.createElement('textarea');
-        document.body.appendChild(dummy);
-        dummy.value = url;
-        dummy.select();
-        document.execCommand('copy');
-        document.body.removeChild(dummy);
         
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-check"></i> COPIED!';
-        btn.classList.add('text-green-400');
-        setTimeout(() => {
-            btn.innerHTML = originalText;
-            btn.classList.remove('text-green-400');
-        }, 2000);
-    },
-    openInBluefy: function() {
-        const url = window.location.href;
-        const bluefyUrl = url.replace(/^https?:\/\//i, 'bluefy://');
-        window.location.href = bluefyUrl;
+        const showSuccess = () => {
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> COPIED!';
+            btn.classList.add('text-green-400');
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.remove('text-green-400');
+            }, 2000);
+        };
+
+        const fallbackCopy = (text) => {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed"; textArea.style.top = "50%"; textArea.style.left = "50%";
+            textArea.style.width = "2em"; textArea.style.height = "2em"; textArea.style.padding = "0"; textArea.style.border = "none";
+            textArea.style.outline = "none"; textArea.style.boxShadow = "none"; textArea.style.background = "transparent"; textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            
+            textArea.focus(); textArea.select();
+            
+            if (navigator.userAgent.match(/ipad|iphone|ipod/i)) {
+                textArea.contentEditable = true; textArea.readOnly = false;
+                const range = document.createRange(); range.selectNodeContents(textArea);
+                const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+                textArea.setSelectionRange(0, 999999);
+            }
+
+            try {
+                if (document.execCommand('copy')) showSuccess();
+                else alert('コピーに失敗しました。手動でURLをコピーしてください。\n' + text);
+            } catch (err) { alert('コピーに失敗しました。\n' + text); }
+            document.body.removeChild(textArea);
+        };
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(url).then(showSuccess).catch(() => fallbackCopy(url));
+        } else {
+            fallbackCopy(url);
+        }
     }
 };
 
@@ -508,19 +529,28 @@ const UI = {
  * ==========================================
  */
 const Engine = {
-    // 【物理スプリング演算】バネモデル (スナップ処理完全撤廃)
     updatePhysics: function(key, target, stiffness, damping) {
         let force = (target - AnimData[key].val) * stiffness;
         AnimData[key].vel = (AnimData[key].vel + force) * damping;
         AnimData[key].val += AnimData[key].vel;
     },
-    // 【LPF演算】Gセンサー用の滑らかなフィルター
     updateLPF: function(key, target, alpha) {
         AnimData[key].val += (target - AnimData[key].val) * alpha;
     },
     
+    lastFrameTime: 0,
+    fpsLimit: 30,
+    
     loop: function(now) {
-        // メーター類の物理演算
+        requestAnimationFrame(t => this.loop(t));
+        
+        if (!now) return;
+        const frameInterval = 1000 / this.fpsLimit;
+        let elapsed = now - this.lastFrameTime;
+        
+        if (elapsed < frameInterval) return;
+        this.lastFrameTime = now - (elapsed % frameInterval);
+
         this.updatePhysics('rpm', CarData.rpm, 0.08, 0.80);
         this.updatePhysics('boost', CarData.boost, 0.10, 0.75);
         this.updatePhysics('speed', CarData.speed, 0.04, 0.85);
@@ -529,7 +559,6 @@ const Engine = {
         this.updatePhysics('coolant', CarData.coolant, 0.02, 0.90);
         this.updatePhysics('intake', CarData.intake, 0.02, 0.90);
 
-        // Gセンサー専用のLPF演算
         let targetGX = State.isSimulation ? Sim.g.x : FilteredG.x;
         let targetGY = State.isSimulation ? Sim.g.y : FilteredG.y;
         this.updateLPF('gX', targetGX, 0.15);
@@ -537,15 +566,12 @@ const Engine = {
 
         this.updateDOM();
         
-        // Gセンサーレーダーの軌跡保存と描画
         if (now - lastGHistoryTime > 60) {
             gHistory.push({ x: AnimData.gX.val, y: AnimData.gY.val });
             if (gHistory.length > MAX_G_HISTORY) gHistory.shift();
             lastGHistoryTime = now;
         }
         this.drawRadar();
-
-        requestAnimationFrame(t => this.loop(t));
     },
 
     updateDOM: function() {
@@ -561,7 +587,6 @@ const Engine = {
         UI.els['gauge-arc'].style.strokeDashoffset = 534 - (Math.min(AnimData.rpm.val / 8000, 1.0) * 534);
 
         UI.els['hp-value'].textContent = Math.round(AnimData.hp.val);
-        // ★ トルクを kgm 表記(小数点第一位)に変更
         UI.els['torque-value'].textContent = (AnimData.torque.val / 9.8).toFixed(1);
         UI.els['hp-bar'].style.width = `${Math.min(AnimData.hp.val / 220 * 100, 100)}%`;
         UI.els['torque-bar'].style.width = `${Math.min(AnimData.torque.val / 350 * 100, 100)}%`;
@@ -622,7 +647,6 @@ const Calc = {
 
         UI.els['peak-speed'].textContent = Math.round(Peaks.speed); UI.els['peak-coolant'].textContent = Math.round(Peaks.coolant);
         UI.els['peak-dynamic'].textContent = State.mode === 'dynamic' ? Peaks.dynamic.toFixed(2) : Math.round(Peaks.dynamic);
-        // ★ ピークトルクも kgm 表記に変更
         UI.els['peak-hp'].textContent = Math.round(Peaks.hp); UI.els['peak-torque'].textContent = (Peaks.torque / 9.8).toFixed(1);
 
         if (CarData.rpm > 6000) { 
@@ -654,9 +678,8 @@ const Sim = {
         UI.els['status-indicator'].className = "w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"; UI.els['connection-status'].textContent = "Demo Mode";
         if (this.timer) clearInterval(this.timer);
         
-        // ★ V45.3 FIX: デモモードの更新頻度を150msから、最も滑らかだった50msに完全復元
         this.timer = setInterval(() => {
-            this.time += 0.05;
+            this.time += 0.10;
             CarData.rpm = 3800 + Math.sin(this.time) * 3000;
             CarData.speed = 40 + Math.sin(this.time) * 20;
             CarData.boost = Math.max(0, Math.sin(this.time) * 1.6);
@@ -672,7 +695,7 @@ const Sim = {
             if (mag > GPeak) { GPeak = mag; GPeakCoords = {x: this.g.x, y: this.g.y}; UI.els['peak-g-value'].textContent = GPeak.toFixed(2) + " G"; }
             
             Calc.processEngineData();
-        }, 50);
+        }, 100);
     },
     stop: function() { if(this.timer) clearInterval(this.timer); }
 };
@@ -689,6 +712,8 @@ const OBD = {
     
     toggleConnection: function() {
         if (!navigator.bluetooth) {
+            const bluefyBtn = document.getElementById('btn-open-bluefy');
+            if (bluefyBtn) bluefyBtn.href = window.location.href.replace(/^https?:\/\//i, 'bluefy://');
             document.getElementById('ble-warning-modal').classList.remove('hidden');
             return;
         }
@@ -725,6 +750,12 @@ const OBD = {
             
             Sim.stop();
             State.isSimulation = false;
+
+            // ★ V45.8 FIX: 実車接続時にデモの仮想データを完全に消去し、キメラデータ混入を防止
+            CarData.rpm = 0; CarData.speed = 0; CarData.coolant = 0; CarData.intake = 0; CarData.boost = 0.0; CarData.map = 101; CarData.baro = 101; CarData.throttle = 0; CarData.pedal = 0; CarData.timing = 0; CarData.hp = 0; CarData.torque = 0;
+            Peaks.rpm = 0; Peaks.speed = 0; Peaks.coolant = 0; Peaks.dynamic = 0.0; Peaks.hp = 0; Peaks.torque = 0;
+            Object.keys(AnimData).forEach(k => { AnimData[k].val = 0; AnimData[k].vel = 0; });
+            
             UI.els['connect-text'].textContent = "Disconnect"; UI.els['connect-icon'].className = "fa-solid fa-circle-xmark";
             UI.els['status-indicator'].className = "w-1.5 h-1.5 rounded-full bg-green-500"; UI.els['connection-status'].textContent = "OBD Ready";
             
@@ -749,6 +780,9 @@ const OBD = {
     sendCmd: async function(cmd) {
         if (!txCharacteristic) return;
         try {
+            // ★ V45.9 FIX: 送信時のコンソールログを復活
+            if (!State.isDTCScanning) UI.log(cmd.replace('\r', ''), 'tx');
+            
             if (txCharacteristic.properties.writeWithoutResponse) { await txCharacteristic.writeValueWithoutResponse(new TextEncoder().encode(cmd)); } 
             else { await txCharacteristic.writeValue(new TextEncoder().encode(cmd)); }
         } catch(e) { UI.log("Write fail: " + e.message, "error"); }
@@ -783,7 +817,15 @@ const OBD = {
         if (this.rxBuffer.includes('>')) {
             const cleanRes = this.rxBuffer.replace(/[\r\n>]/g, '').trim();
             if (cleanRes.length > 0 && !cleanRes.includes("?") && !cleanRes.includes("NODATA") && !cleanRes.includes("ERROR")) {
-                if (!State.isDTCScanning) this.parse(cleanRes);
+                // ★ V45.9 FIX: 受信時のコンソールログを復活
+                if (!State.isDTCScanning) UI.log(cleanRes, 'rx');
+                
+                const parts = cleanRes.split('41');
+                parts.forEach(part => {
+                    if (part.length >= 4 && !State.isDTCScanning) {
+                        this.parse("41" + part);
+                    }
+                });
             }
             if (!State.isDTCScanning) {
                 this.rxBuffer = ""; 
@@ -821,21 +863,47 @@ const OBD = {
  * =========================================================
  */
 const GForce = {
+    isEnabled: false,
     skip: function() { document.getElementById('g-sensor-modal').classList.add('hidden'); },
-    enable: async function() { 
+    
+    // ★ V45.8 FIX: 消えていたキャリブレーション処理を復元し、iOSの権限も確実に突破
+    enableAndCalibrate: async function() { 
         document.getElementById('g-sensor-modal').classList.add('hidden'); 
+        
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            try { if (await DeviceMotionEvent.requestPermission() === 'granted') window.addEventListener('devicemotion', this.onMotion.bind(this), true); } catch (e) {}
-        } else { window.addEventListener('devicemotion', this.onMotion.bind(this), true); }
+            try { 
+                const permission = await DeviceMotionEvent.requestPermission();
+                if (permission === 'granted') {
+                    window.addEventListener('devicemotion', this.onMotion.bind(this), true);
+                    this.isEnabled = true;
+                } else {
+                    UI.log("G-Sensor Permission Denied.", "error"); return;
+                }
+            } catch (e) { UI.log("G-Sensor Init Error.", "error"); }
+        } else { 
+            window.addEventListener('devicemotion', this.onMotion.bind(this), true); 
+            this.isEnabled = true;
+        }
+        
         gCalibrating = true; 
-        setTimeout(() => { GOffset.x = rawAcc.x; GOffset.y = rawAcc.y; gCalibrating = false; GPeak = 0; GPeakCoords = {x:0,y:0}; FilteredG.x=0; FilteredG.y=0; }, 600);
-        UI.log("G-Sensor Calibrated.", "system"); Utils.playBeep(1000, 0.2);
+        UI.log("Calibrating G-Sensor...", "system");
+        setTimeout(() => { 
+            GOffset.x = rawAcc.x; GOffset.y = rawAcc.y; 
+            gCalibrating = false; 
+            GPeak = 0; GPeakCoords = {x:0,y:0}; 
+            FilteredG.x = 0; FilteredG.y = 0; 
+            UI.log("G-Sensor Ready.", "system");
+            Utils.playBeep(1000, 0.2); 
+        }, 1000);
     },
     onMotion: function(event) {
         if (!event.accelerationIncludingGravity) return;
-        rawAcc.x = (event.accelerationIncludingGravity.y || 0) / 9.8; 
-        rawAcc.y = -(event.accelerationIncludingGravity.x || 0) / 9.8;
-        if (!gCalibrating && !State.isSimulation) {
+        
+        // スマホを縦（ポートレート）でエアコン吹き出し口等に設置した前提の軸計算
+        rawAcc.x = (event.accelerationIncludingGravity.x || 0) / 9.8; 
+        rawAcc.y = (event.accelerationIncludingGravity.y || 0) / 9.8;
+        
+        if (!gCalibrating && this.isEnabled && !State.isSimulation) {
             currentG.x = rawAcc.x - GOffset.x; currentG.y = rawAcc.y - GOffset.y;
             FilteredG.x += (currentG.x - FilteredG.x) * 0.20; 
             FilteredG.y += (currentG.y - FilteredG.y) * 0.20;
@@ -854,13 +922,11 @@ const CSV = {
     debugLogs: [],
     timer: null,
     start: function() {
-        // ★ ヘッダーの Torque_Nm を Torque_kgm に変更
         telemetryData = ["Timestamp,RPM,Speed_kmh,Coolant_C,Intake_C,Baro_kPa,MAP_kPa,Boost_bar,Throttle_%,Pedal_%,Timing_deg,HP_PS,Torque_kgm,GLat,GLong"];
         if (this.timer) clearInterval(this.timer);
         this.timer = setInterval(() => {
             if (!State.isSimulation && !State.isDTCScanning) {
                 const ts = new Date().toISOString();
-                // ★ CSVに保存する値も kgm (小数点第一位) に変更
                 const row = `${ts},${Math.round(CarData.rpm)},${Math.round(CarData.speed)},${Math.round(CarData.coolant)},${Math.round(CarData.intake)},${CarData.baro},${CarData.map},${CarData.boost.toFixed(2)},${Math.round(CarData.throttle)},${Math.round(CarData.pedal)},${CarData.timing.toFixed(1)},${Math.round(CarData.hp)},${(CarData.torque / 9.8).toFixed(1)},${FilteredG.x.toFixed(3)},${FilteredG.y.toFixed(3)}`;
                 telemetryData.push(row);
             }
@@ -1016,7 +1082,6 @@ const DTC = {
  * =========================================================
  */
 const App = {
-    // toggleSkinの引数に特定の状態を渡すことで、トグル式を維持しつつ初期状態を固定
     toggleSkin: function(forceSkin = null) {
         if (forceSkin !== null) {
             State.isRetroSkin = forceSkin;
@@ -1060,16 +1125,17 @@ const App = {
         const html = ['PORSCHE', 'BMW', 'MERCEDES', 'AUDI', 'VW', 'TOYOTA', 'NISSAN', 'HONDA', 'SUBARU', 'MAZDA', 'MCLAREN', 'FERRARI', 'ASTON MARTIN'].map(b => `<span class="text-[9px] font-bold font-mono tracking-widest text-gray-400 text-center">${b}</span>`).join('');
         if(UI.els['brand-carousel-container']) { document.getElementById('staff-roll-content-1').innerHTML=html; document.getElementById('staff-roll-content-2').innerHTML=html; }
         
-        // ★ V45.2 FIX: 起動時に確実に「GarageRedスキン」を適用する
         this.toggleSkin(false); 
         this.setDNA('natural');
         Sim.start();
         
         requestAnimationFrame((now) => Engine.loop(now));
-        UI.log("App Boot Sequence Complete. REBORN ENGINE v45.2", "system");
+        UI.log("App Boot Sequence Complete. REBORN ENGINE v45.8", "system");
 
         if (!navigator.bluetooth) {
             setTimeout(() => {
+                const bluefyBtn = document.getElementById('btn-open-bluefy');
+                if (bluefyBtn) bluefyBtn.href = window.location.href.replace(/^https?:\/\//i, 'bluefy://');
                 document.getElementById('ble-warning-modal').classList.remove('hidden');
             }, 1000);
         }
