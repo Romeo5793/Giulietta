@@ -20,12 +20,12 @@
         .font-serif-brand { font-family: 'Cinzel', serif; }
         .font-cursive-alfa { font-family: 'Great Vibes', cursive; }
         
-        /* ベーステーマ (サイバーカーボン) */
+        /* ベーステーマ */
         .carbon-bg { background-image: radial-gradient(rgba(255,255,255,0.015) 1px, transparent 0), radial-gradient(rgba(255,255,255,0.015) 1px, transparent 0); background-size: 8px 8px; background-position: 0 0, 4px 4px; transition: background 0.5s ease; }
         .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); backdrop-filter: blur(12px); border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .dna-switch-track { background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(20,20,25,0.85) 50%, rgba(0,0,0,0.85) 100%); box-shadow: inset 0 2px 8px rgba(0,0,0,0.9), 0 1px 1px rgba(255,255,255,0.02); }
         
-        /* レトロスキン (Alfa Classic Theme) */
+        /* レトロスキン */
         body.retro-bg #app-wrapper { background-color: #0c0202; background-image: radial-gradient(rgba(209, 18, 28, 0.1) 1px, transparent 0), radial-gradient(rgba(209, 18, 28, 0.1) 1px, transparent 0); }
         body.retro-bg .glass-card { background: linear-gradient(135deg, rgba(30, 5, 5, 0.7), rgba(10, 0, 0, 0.8)); border: 1px solid rgba(209, 18, 28, 0.25); box-shadow: inset 0 0 20px rgba(209, 18, 28, 0.05), 0 4px 15px rgba(0,0,0,0.5); }
         body.retro-bg .text-gray-500 { color: #b45309; } 
@@ -35,7 +35,7 @@
         .font-156-gauge { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; text-shadow: 0 0 12px rgba(209, 18, 28, 0.8); }
         .text-garage-red { color: #de000a; }
 
-        /* GPUアクセラレーション (アニメーションは物理エンジンに委任) */
+        /* GPUアクセラレーション (アニメーションはJSの物理エンジンに完全委任) */
         .gpu-accel { transform: translateZ(0); will-change: transform, width, stroke-dashoffset; }
         .smooth-value, #gauge-arc, #hp-bar, #torque-bar, #big-boost-bar-rect { transition: none !important; }
 
@@ -240,7 +240,7 @@
     </aside>
 </div>
 
-<!-- ★ V33 FIX: Gセンサー誘導モーダル追加 -->
+<!-- Gセンサー誘導モーダル -->
 <div id="g-sensor-modal" class="hidden fixed inset-0 bg-black/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="w-full max-w-sm glass-card bg-zinc-950/95 border-blue-500/20 p-5 shadow-2xl flex flex-col gap-4 text-center">
         <div class="text-blue-400 text-3xl mb-2 animate-bounce"><i class="fa-solid fa-mobile-screen-button"></i></div>
@@ -355,13 +355,8 @@
         } catch (e) {}
     }
 
-    // ★ Gセンサーの制御関数
     function skipGSensor() { document.getElementById('g-sensor-modal').classList.add('hidden'); }
-    async function enableGSensor() {
-        document.getElementById('g-sensor-modal').classList.add('hidden');
-        await calibrateGForce();
-    }
-
+    async function enableGSensor() { document.getElementById('g-sensor-modal').classList.add('hidden'); await calibrateGForce(); }
     function openSettings() { document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key') || ""; document.getElementById('settings-modal').classList.remove('hidden'); }
     function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
     function saveSettings() { localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value); closeSettings(); logConsole("API Key saved.", "system"); }
@@ -387,7 +382,7 @@
     function showTextDataModal(title, content) {
         const container = document.createElement('div');
         container.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;padding:max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)) 20px;box-sizing:border-box;';
-        container.innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:10px;align-items:center;"><h3 style="color:white;margin:0;font-family:monospace;font-size:12px;">${title}</h3><div style="display:flex;gap:10px;"><button id="modal-copy-close-btn" style="padding:8px 12px;background:#10b981;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;"><i class="fa-solid fa-copy"></i> COPY & CLOSE</button><button id="modal-close-btn" style="padding:8px 12px;background:#D1121C;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;">✖</button></div></div><textarea id="modal-textarea" readonly style="flex:1;width:100%;background:#111;color:#0f0;font-family:monospace;font-size:10px;padding:10px;border:1px solid #333;border-radius:4px;white-space:pre;overflow:scroll;">${content}</textarea>`;
+        container.innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:10px;align-items:center;"><h3 style="color:white;margin:0;font-family:monospace;font-size:12px;">${title}</h3><div style="display:flex;gap:10px;"><button id="modal-copy-close-btn" style="padding:8px 12px;background:#10b981;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;"><i class="fa-solid fa-copy"></i> COPY & CLOSE</button><button id="modal-close-btn" style="padding:8px 12px;background:#D1121C;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;">✖</button></div></div><textarea id="modal-textarea" readonly style="flex:1;width:100%;background:#111;color:#0f0;font-family:monospace;font-size:10px;padding:10px;border:1px solid #333;border-radius:4px;white-space:pre;overflow:scroll;">${content}</textarea><div style="color:gray;font-size:10px;text-align:center;margin-top:10px;">※「COPY & CLOSE」を押し、iOSの「メモ」アプリ等にペーストして保存してください。</div>`;
         document.body.appendChild(container);
         document.getElementById('modal-copy-close-btn').onclick = () => { const textarea = document.getElementById('modal-textarea'); textarea.select(); textarea.setSelectionRange(0, 999999); try { document.execCommand('copy'); document.body.removeChild(container); logConsole("コピー完了", "system"); } catch (e) { alert('コピー失敗'); } };
         document.getElementById('modal-close-btn').onclick = () => { document.body.removeChild(container); };
@@ -429,17 +424,25 @@
     }
 
     let data = { rpm: 800, speed: 0, coolant: 85, intake: 24, boost: 0.0, map: 100, baro: 100, throttle: 0, pedal: 0, timing: 0, hp: 0, torque: 0 };
-    let peaks = { rpm: 0, speed: 0, coolant: 0, dynamic: 0.0, hp: 0, torque: 0 };
     
-    // 物理スプリング・ダンパモデル（慣性アニメーション）
+    // ★ メーター類は物理スプリング・ダンパモデル
     let phys = {
-        rpm: { val: 800, vel: 0 }, speed: { val: 0, vel: 0 }, boost: { val: 0, vel: 0 }, hp: { val: 0, vel: 0 }, torque: { val: 0, vel: 0 }, coolant: { val: 85, vel: 0 }, intake: { val: 24, vel: 0 }
+        rpm: { val: 800, vel: 0 },
+        speed: { val: 0, vel: 0 },
+        boost: { val: 0, vel: 0 },
+        hp: { val: 0, vel: 0 },
+        torque: { val: 0, vel: 0 },
+        coolant: { val: 85, vel: 0 },
+        intake: { val: 24, vel: 0 }
     };
+    
+    // ★ Gセンサーは専用のLerp(線形補間)座標
+    let animG = { x: 0, y: 0 };
+    
+    let peaks = { rpm: 0, speed: 0, coolant: 0, dynamic: 0.0, hp: 0, torque: 0 };
 
     let bluetoothDevice = null, txCharacteristic = null, rxCharacteristic = null;
     let isWaitingForResponse = false, responseTimeoutTimer = null, rxBuffer = "", isDTCScanning = false; 
-
-    // ★ V33 FIX: フルバーストが通るかどうかのフラグ
     let isMultiplexSupported = true; 
 
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -465,26 +468,20 @@
 
     window.onload = function() { 
         setTimeout(() => window.scrollTo(0, 1), 500); initStaffRoll(); isRetroSkin = false; toggleRetroSkin(); setDNAMode('natural'); initGForceCanvas(); startSimulation(); 
-        requestAnimationFrame(renderLoop); logConsole("App Standby. ENGINE v33 (ULTIMATE SYNC EDITION)", "system"); 
+        requestAnimationFrame(renderLoop); logConsole("App Standby. ENGINE v33.1 (RESTORED PHYSICS)", "system"); 
     };
 
     let gCanvas = null, gCtx = null, lastDrawTime = 0;
-    function initGForceCanvas() { gCanvas = document.getElementById('g-canvas'); if (gCanvas) { gCtx = gCanvas.getContext('2d'); requestAnimationFrame(animateGForce); } }
-    
-    function animateGForce(timestamp) { 
-        if (gCtx && gCanvas) {
-            if (timestamp - lastDrawTime > 60) {
-                let targetX = isSimulation ? currentG.x : filteredG.x; let targetY = isSimulation ? currentG.y : filteredG.y;
-                gHistory.push({ x: targetX, y: targetY }); if (gHistory.length > MAX_G_HISTORY) gHistory.shift(); lastDrawTime = timestamp;
-            } drawGForceRadar(); 
-        } requestAnimationFrame(animateGForce); 
-    }
+    function initGForceCanvas() { gCanvas = document.getElementById('g-canvas'); if (gCanvas) { gCtx = gCanvas.getContext('2d'); } }
 
+    // Gセンサーの描画処理を物理エンジンで計算された座標を使用して行う
     function drawGForceRadar() {
+        if (!gCtx || !gCanvas) return;
         const w = gCanvas.width, h = gCanvas.height, cx = w / 2, cy = h / 2, scale = cx / 0.8;
         gCtx.clearRect(0, 0, w, h); gCtx.strokeStyle = 'rgba(255,255,255,0.06)'; gCtx.lineWidth = 2; 
         gCtx.beginPath(); gCtx.arc(cx, cy, 0.5 * scale, 0, 2 * Math.PI); gCtx.stroke(); gCtx.beginPath(); gCtx.arc(cx, cy, 1.0 * scale, 0, 2 * Math.PI); gCtx.stroke();
         gCtx.beginPath(); gCtx.moveTo(0, cy); gCtx.lineTo(w, cy); gCtx.moveTo(cx, 0); gCtx.lineTo(cx, h); gCtx.stroke();
+        
         if (gHistory.length > 1) {
             for (let i = 1; i < gHistory.length; i++) {
                 gCtx.beginPath(); gCtx.moveTo(cx + gHistory[i-1].x * scale, cy - gHistory[i-1].y * scale); gCtx.lineTo(cx + gHistory[i].x * scale, cy - gHistory[i].y * scale);
@@ -497,8 +494,9 @@
             let px = cx + peakG_coords.x * scale, py = cy - peakG_coords.y * scale; px = Math.max(8, Math.min(w-8, px)); py = Math.max(8, Math.min(h-8, py));
             gCtx.stroke(new Path2D(`M ${px-4} ${py-4} L ${px+4} ${py+4} M ${px+4} ${py-4} L ${px-4} ${py+4}`)); gCtx.beginPath(); gCtx.arc(px, py, 4, 0, 2 * Math.PI); gCtx.strokeStyle='rgba(251,191,36,0.7)'; gCtx.lineWidth=2; gCtx.stroke();
         }
-        let targetX = isSimulation ? currentG.x : filteredG.x; let targetY = isSimulation ? currentG.y : filteredG.y;
-        let curX = cx + targetX * scale, curY = cy - targetY * scale; curX = Math.max(8, Math.min(w-8, curX)); curY = Math.max(8, Math.min(h-8, curY));
+        
+        // Gセンサー専用のLerp座標で描画
+        let curX = cx + animG.x * scale, curY = cy - animG.y * scale; curX = Math.max(8, Math.min(w-8, curX)); curY = Math.max(8, Math.min(h-8, curY));
         gCtx.beginPath(); gCtx.arc(curX, curY, 6, 0, 2 * Math.PI); gCtx.fillStyle = isRetroSkin ? colors.alfaRed : (currentMode === 'dynamic' ? colors.alfaRed : (currentMode === 'allweather' ? colors.coolBlue : '#22D3EE')); gCtx.fill();
     }
 
@@ -507,8 +505,7 @@
             try { if (await DeviceMotionEvent.requestPermission() === 'granted') window.addEventListener('devicemotion', handleMotion, true); } catch (e) {}
         } else { window.addEventListener('devicemotion', handleMotion, true); }
         gCalibrating = true; setTimeout(() => { gOffset.x = rawAcc.x; gOffset.y = rawAcc.y; gCalibrating = false; peakG = 0; peakG_coords = {x:0,y:0}; filteredG = {x:0, y:0}; }, 600);
-        logConsole("G-Sensor Calibrated.", "system");
-        playAlertSound(1000, 0.2);
+        logConsole("G-Sensor Calibrated.", "system"); playAlertSound(1000, 0.2);
     }
 
     function handleMotion(event) {
@@ -517,7 +514,7 @@
         if (!gCalibrating && !isSimulation) {
             currentG.x = rawAcc.x - gOffset.x; currentG.y = rawAcc.y - gOffset.y;
             filteredG.x = (currentG.x * LPF_ALPHA) + (filteredG.x * (1.0 - LPF_ALPHA)); filteredG.y = (currentG.y * LPF_ALPHA) + (filteredG.y * (1.0 - LPF_ALPHA));
-            document.getElementById('lat-g-value').textContent = filteredG.x.toFixed(2) + " G"; document.getElementById('long-g-value').textContent = filteredG.y.toFixed(2) + " G";
+            
             let mag = Math.sqrt(filteredG.x * filteredG.x + filteredG.y * filteredG.y);
             if (mag > peakG) { peakG = mag; peakG_coords = {x: filteredG.x, y: filteredG.y}; document.getElementById('peak-g-value').textContent = peakG.toFixed(2) + " G"; }
         }
@@ -584,29 +581,40 @@
         checkWarnings();
     }
 
-    // ★ 60fps ゲームループ (物理スプリング・ダンパモデル)
+    // ★ 60fps ゲームループ (V33.1の物理スプリングモデル)
     function renderLoop() {
         const updatePhysics = (key, target, stiffness, damping) => {
             let force = (target - phys[key].val) * stiffness;
             phys[key].vel = (phys[key].vel + force) * damping;
             phys[key].val += phys[key].vel;
+            
+            // ピタッと止めるためのスナップ処理
             if (Math.abs(phys[key].vel) < 0.01 && Math.abs(target - phys[key].val) < 0.1) {
                 phys[key].vel = 0; phys[key].val = target;
             }
         };
 
-        // レスポンスの鋭さと滑らかさの両立
-        updatePhysics('rpm', data.rpm, 0.10, 0.75);
-        updatePhysics('boost', data.boost, 0.12, 0.70);
-        updatePhysics('speed', data.speed, 0.05, 0.85);
-        updatePhysics('hp', data.hp, 0.08, 0.75);
-        updatePhysics('torque', data.torque, 0.08, 0.75);
+        // バネの硬さ(stiffness)と減衰(damping)を最適化し、レスポンスの鋭さと滑らかさを両立
+        updatePhysics('rpm', data.rpm, 0.08, 0.80);
+        updatePhysics('boost', data.boost, 0.10, 0.75);
+        updatePhysics('speed', data.speed, 0.04, 0.85);
+        updatePhysics('hp', data.hp, 0.06, 0.80);
+        updatePhysics('torque', data.torque, 0.06, 0.80);
         updatePhysics('coolant', data.coolant, 0.02, 0.90);
         updatePhysics('intake', data.intake, 0.02, 0.90);
 
+        // ★ Gセンサーはバネ(物理)特有のプルプルを防ぐため、シンプルなLerpを使用
+        let targetGX = isSimulation ? currentG.x : filteredG.x;
+        let targetGY = isSimulation ? currentG.y : filteredG.y;
+        animG.x += (targetGX - animG.x) * 0.2;
+        animG.y += (targetGY - animG.y) * 0.2;
+
+        // DOMの更新
         rpmText.textContent = Math.round(phys.rpm.val); 
         speedText.textContent = Math.round(phys.speed.val); 
         coolantText.textContent = Math.round(phys.coolant.val);
+        document.getElementById('lat-g-value').textContent = animG.x.toFixed(2) + " G"; 
+        document.getElementById('long-g-value').textContent = animG.y.toFixed(2) + " G";
         
         if (currentMode === 'dynamic') { dynamicValue.textContent = phys.boost.val.toFixed(2); } 
         else { dynamicValue.textContent = Math.round(phys.intake.val); }
@@ -644,6 +652,16 @@
                 bigBoostValue.style.color = "#dc2626"; 
             }
         }
+
+        // Gセンサーの描画と軌跡の更新
+        const now = performance.now();
+        if (now - lastDrawTime > 60) {
+            gHistory.push({ x: animG.x, y: animG.y }); 
+            if (gHistory.length > MAX_G_HISTORY) gHistory.shift(); 
+            lastDrawTime = now;
+        }
+        drawGForceRadar();
+
         requestAnimationFrame(renderLoop);
     }
 
@@ -653,7 +671,7 @@
         if (simulationInterval) clearInterval(simulationInterval);
         
         simulationInterval = setInterval(() => {
-            simTime += 0.4; 
+            simTime += 0.2; 
             data.rpm = 3800 + Math.sin(simTime) * 3000; 
             data.speed = 40 + Math.sin(simTime) * 20; 
             data.boost = Math.max(0, Math.sin(simTime) * 1.6); 
@@ -662,9 +680,15 @@
             data.pedal = (data.rpm > 1500) ? Math.min(100, 50 + Math.sin(simTime)*60) : 0; 
             data.throttle = (data.boost > 1.2) ? 20 : data.pedal; 
             data.timing = 15 + Math.sin(simTime)*5;
-            currentG.x = Math.sin(simTime * 1.5) * 0.45; currentG.y = (data.speed / 100) * 0.35 + (Math.sin(simTime * 0.8) > 0 ? 0.3 : -0.2); 
+            
+            currentG.x = Math.sin(simTime * 1.5) * 0.45; 
+            currentG.y = (data.speed / 100) * 0.35 + (Math.sin(simTime * 0.8) > 0 ? 0.3 : -0.2); 
+            
+            let mag = Math.sqrt(currentG.x * currentG.x + currentG.y * currentG.y);
+            if (mag > peakG) { peakG = mag; peakG_coords = {x: currentG.x, y: currentG.y}; document.getElementById('peak-g-value').textContent = peakG.toFixed(2) + " G"; }
+            
             processEngineData();
-        }, 400); 
+        }, 150); 
     }
     function stopSimulation() { if (simulationInterval) clearInterval(simulationInterval); }
 
@@ -698,6 +722,10 @@
             await sendELMCommand("ATE0\r"); await delay(200); 
             await sendELMCommand("ATH0\r"); await delay(200); 
             await sendELMCommand("ATS0\r"); await delay(200); 
+            await sendELMCommand("ATCAF1\r"); await delay(200); 
+            await sendELMCommand("ATAL\r"); await delay(200); 
+            await sendELMCommand("ATAT1\r"); await delay(200); 
+            await sendELMCommand("ATST10\r"); await delay(200); 
             await sendELMCommand("ATSP0\r"); await delay(200);
             
             isSimulation = false; stopSimulation();
@@ -705,9 +733,8 @@
             statusIndicator.className = "w-1.5 h-1.5 rounded-full bg-green-500"; connectionStatusText.textContent = "OBD Ready";
             
             debugFullLogs = []; isWaitingForResponse = false; rxBuffer = "";
-            logConsole("Init complete. ULTRA BURST started.", "system");
+            logConsole("Init complete. MULTIPLEX polling started.", "system");
 
-            // ★ V33 FIX: 接続成功後にGセンサーの有効化を促すモーダルを表示
             document.getElementById('g-sensor-modal').classList.remove('hidden');
 
             startCSVLogging();
@@ -728,21 +755,10 @@
 
         isWaitingForResponse = true; pollTick++; let nextCmd = "";
         
-        // ★ V33 FIX: 究極の「全データ一括要求(フルバースト)」とスマート・フォールバック
         if (isMultiplexSupported) {
-            // フルバーストモード: 一発で主要な6種類のデータを全て要求する
-            if (pollTick % 5 !== 0) {
-                nextCmd = "010C0B0D11490E"; 
-            } else {
-                nextCmd = "01050F33"; 
-            }
+            if (pollTick % 5 !== 0) { nextCmd = "010C0B0D11490E"; } else { nextCmd = "01050F33"; }
         } else {
-            // フォールバックモード: ECUがフルバーストを拒否した場合は、絶対にエラーにならない3つずつの分割要求に自動で切り替える
-            if (pollTick % 2 === 0) {
-                nextCmd = "010C0B0D"; 
-            } else {
-                nextCmd = "0111490E"; 
-            }
+            if (pollTick % 2 === 0) { nextCmd = "010C0B0D"; } else { nextCmd = "0111490E"; }
         }
         
         sendELMCommand(nextCmd + "\r");
@@ -762,10 +778,9 @@
             const cleanResponse = rxBuffer.replace(/[\r\n>]/g, '').trim();
             
             if (cleanResponse.length > 0) {
-                // ★ V33 FIX: エラー検知＆スマート・フォールバック
                 if (cleanResponse.includes("?")) {
                     if (isMultiplexSupported) {
-                        isMultiplexSupported = false; // フルバーストを諦め、即座に安全モードに切り替える
+                        isMultiplexSupported = false; 
                         logConsole("ECU rejected Full-Burst. Falling back to Safe Mode.", "error");
                     }
                 } else if(!cleanResponse.includes("NODATA") && !cleanResponse.includes("ERROR")) {
@@ -778,7 +793,7 @@
                 if (isWaitingForResponse) {
                     clearTimeout(responseTimeoutTimer);
                     isWaitingForResponse = false;
-                    setTimeout(pollNextOBDCommand, 0); // 限界まで0msで次を打つ
+                    setTimeout(pollNextOBDCommand, 0); 
                 }
             }
         }
@@ -787,7 +802,6 @@
     function parseOBDResponse(response) {
         const clean = response.replace(/\s+/g, ''); if (!clean.startsWith("41")) return;
         
-        // 複数PIDの応答を動的に切り分ける
         let isDataUpdated = false;
         let pIndex = clean.indexOf('41');
         
