@@ -20,12 +20,12 @@
         .font-serif-brand { font-family: 'Cinzel', serif; }
         .font-cursive-alfa { font-family: 'Great Vibes', cursive; }
         
-        /* ベーステーマ */
+        /* Base Theme */
         .carbon-bg { background-image: radial-gradient(rgba(255,255,255,0.015) 1px, transparent 0), radial-gradient(rgba(255,255,255,0.015) 1px, transparent 0); background-size: 8px 8px; background-position: 0 0, 4px 4px; transition: background 0.5s ease; }
         .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); backdrop-filter: blur(12px); border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .dna-switch-track { background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, rgba(20,20,25,0.85) 50%, rgba(0,0,0,0.85) 100%); box-shadow: inset 0 2px 8px rgba(0,0,0,0.9), 0 1px 1px rgba(255,255,255,0.02); }
         
-        /* レトロスキン */
+        /* Retro Skin */
         body.retro-bg #app-wrapper { background-color: #0c0202; background-image: radial-gradient(rgba(209, 18, 28, 0.1) 1px, transparent 0), radial-gradient(rgba(209, 18, 28, 0.1) 1px, transparent 0); }
         body.retro-bg .glass-card { background: linear-gradient(135deg, rgba(30, 5, 5, 0.7), rgba(10, 0, 0, 0.8)); border: 1px solid rgba(209, 18, 28, 0.25); box-shadow: inset 0 0 20px rgba(209, 18, 28, 0.05), 0 4px 15px rgba(0,0,0,0.5); }
         body.retro-bg .text-gray-500 { color: #b45309; } 
@@ -35,24 +35,21 @@
         .font-156-gauge { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; text-shadow: 0 0 12px rgba(209, 18, 28, 0.8); }
         .text-garage-red { color: #de000a; }
 
-        /* GPUアクセラレーション (アニメーションはJSの物理エンジンに完全委任) */
+        /* Disable CSS Transitions for JS Animation Engine */
         .gpu-accel { transform: translateZ(0); will-change: transform, width, stroke-dashoffset; }
         .smooth-value, #gauge-arc, #hp-bar, #torque-bar, #big-boost-bar-rect { transition: none !important; }
 
         @keyframes rapid-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
         .animate-rapid { animation: rapid-pulse 0.15s infinite; }
         
-        /* スタッフロール用アニメーション */
         .mask-image-vertical { -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%); }
         @keyframes staff-roll { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
         .animate-staff-roll { animation: staff-roll 15s linear infinite; }
 
-        /* フラッシュ/ワーニング */
         @keyframes border-flash { 0%, 100% { box-shadow: inset 0 0 0px rgba(209,18,28,0); } 50% { box-shadow: inset 0 0 80px rgba(209,18,28,0.85); } }
         .shift-flash-active { opacity: 1 !important; animation: border-flash 0.12s infinite; }
         @keyframes warning-flash { 0%, 100% { border-color: rgba(209,18,28,0.5); background: rgba(255, 255, 255, 0.03); box-shadow: 0 0 0 rgba(209,18,28,0); } 50% { border-color: rgb(209,18,28); background: rgba(209,18,28,0.3); box-shadow: 0 0 25px rgba(209,18,28,0.9); } }
         .warning-active { animation: warning-flash 0.25s infinite !important; }
-
         .markdown-body strong { color: #f87171; }
         .markdown-body ul { list-style-type: disc; padding-left: 1rem; margin-top: 0.5rem; }
     </style>
@@ -67,10 +64,10 @@
     <aside class="w-[18%] max-w-[155px] flex flex-col justify-between items-start py-0.5">
         <div class="w-full relative z-10">
             <div class="flex justify-between items-center w-full">
-                <h1 id="brand-logo" class="cursor-pointer hover:opacity-80 transition-opacity" onclick="toggleRetroSkin()"></h1>
+                <h1 id="brand-logo" class="cursor-pointer hover:opacity-80 transition-opacity" onclick="App.toggleSkin()"></h1>
                 <div class="flex gap-2.5">
-                    <button onclick="toggleRetroSkin()" class="text-gray-500 hover:text-white transition-all text-xs" title="アルファロメオテーマ切替"><i class="fa-solid fa-palette"></i></button>
-                    <button onclick="openSettings()" class="text-gray-500 hover:text-white transition-all text-xs" title="設定"><i class="fa-solid fa-gear"></i></button>
+                    <button onclick="App.toggleSkin()" class="text-gray-500 hover:text-white transition-all text-xs" title="アルファロメオテーマ切替"><i class="fa-solid fa-palette"></i></button>
+                    <button onclick="UI.openSettings()" class="text-gray-500 hover:text-white transition-all text-xs" title="設定"><i class="fa-solid fa-gear"></i></button>
                 </div>
             </div>
             <div class="flex items-center gap-1 mt-0.5">
@@ -83,14 +80,13 @@
             <div id="dna-switch-container" class="flex flex-col items-center gap-1 w-full">
                 <span class="text-[8px] font-bold tracking-widest text-gray-500 font-mono uppercase">Alfa DNA</span>
                 <div class="dna-switch-track flex flex-col items-center p-1 rounded-2xl border border-white/5 w-[46px] shadow-2xl">
-                    <button onclick="setDNAMode('dynamic')" id="dna-d" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-gray-500 hover:text-white transition-all duration-300">D</button>
+                    <button onclick="App.setDNA('dynamic')" id="dna-d" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-gray-500 hover:text-white transition-all duration-300">D</button>
                     <div class="w-4 h-[1px] bg-white/10 my-0.5"></div>
-                    <button onclick="setDNAMode('natural')" id="dna-n" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-white bg-gray-500/40 shadow-md transition-all duration-300">N</button>
+                    <button onclick="App.setDNA('natural')" id="dna-n" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-white bg-gray-500/40 shadow-md transition-all duration-300">N</button>
                     <div class="w-4 h-[1px] bg-white/10 my-0.5"></div>
-                    <button onclick="setDNAMode('allweather')" id="dna-a" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-gray-500 hover:text-white transition-all duration-300">A</button>
+                    <button onclick="App.setDNA('allweather')" id="dna-a" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-gray-500 hover:text-white transition-all duration-300">A</button>
                 </div>
             </div>
-
             <div id="brand-carousel-container" class="hidden flex-col w-full h-[110px] opacity-70 overflow-hidden relative mask-image-vertical">
                 <div class="animate-staff-roll flex flex-col w-full absolute top-0">
                     <div id="staff-roll-content-1" class="flex flex-col items-center gap-2 pb-2"></div>
@@ -100,13 +96,13 @@
         </div>
 
         <div class="w-full flex flex-col gap-1 relative z-10">
-            <button onclick="triggerDTCScan()" class="w-full flex items-center justify-center gap-1 text-[7.5px] font-bold tracking-widest py-1.5 rounded-md border border-red-500/20 bg-red-950/10 text-red-400 hover:bg-red-950/20 transition-all font-mono uppercase">
+            <button onclick="DTC.triggerScan()" class="w-full flex items-center justify-center gap-1 text-[7.5px] font-bold tracking-widest py-1.5 rounded-md border border-red-500/20 bg-red-950/10 text-red-400 hover:bg-red-950/20 transition-all font-mono uppercase">
                 <i class="fa-solid fa-triangle-exclamation"></i> <span>DTC DIAG</span>
             </button>
-            <button onclick="exportCSVLog()" class="w-full flex items-center justify-center gap-1 text-[7.5px] font-bold tracking-widest py-1.5 rounded-md border border-emerald-500/20 bg-emerald-950/10 text-emerald-400 hover:bg-emerald-950/20 transition-all font-mono uppercase">
+            <button onclick="CSV.exportData()" class="w-full flex items-center justify-center gap-1 text-[7.5px] font-bold tracking-widest py-1.5 rounded-md border border-emerald-500/20 bg-emerald-950/10 text-emerald-400 hover:bg-emerald-950/20 transition-all font-mono uppercase">
                 <i class="fa-solid fa-file-csv"></i> <span>SAVE CSV</span>
             </button>
-            <button id="connect-btn" onclick="triggerBluetoothConnection()" class="w-full flex items-center justify-center gap-1 text-[7.5px] font-bold tracking-widest py-1.5 rounded-md border border-blue-500/20 bg-blue-950/10 text-blue-400 hover:bg-blue-950/20 transition-all font-mono uppercase">
+            <button id="connect-btn" onclick="OBD.toggleConnection()" class="w-full flex items-center justify-center gap-1 text-[7.5px] font-bold tracking-widest py-1.5 rounded-md border border-blue-500/20 bg-blue-950/10 text-blue-400 hover:bg-blue-950/20 transition-all font-mono uppercase">
                 <i id="connect-icon" class="fa-solid fa-bluetooth"></i> <span id="connect-text">Connect Car</span>
             </button>
         </div>
@@ -138,7 +134,7 @@
             <!-- Gセンサー＆ダイナモ -->
             <div class="w-[180px] h-[180px] flex flex-col gap-2 pointer-events-none shrink-0">
                 <div id="g-sensor-card" class="glass-card flex-1 p-2 flex items-center justify-between relative pointer-events-auto overflow-hidden">
-                    <button onclick="calibrateGForce()" class="absolute top-1.5 right-1.5 text-[6px] text-blue-400 border border-blue-400/20 px-1 rounded hover:bg-blue-400/10 transition-all uppercase z-10">CAL</button>
+                    <button onclick="GForce.calibrate()" class="absolute top-1.5 right-1.5 text-[6px] text-blue-400 border border-blue-400/20 px-1 rounded hover:bg-blue-400/10 transition-all uppercase z-10">CAL</button>
                     <div class="w-[72px] h-[72px] flex items-center justify-center relative shrink-0">
                         <canvas id="g-canvas" width="144" height="144" class="w-full h-full bg-black/40 rounded-full border border-white/5 gpu-accel"></canvas>
                     </div>
@@ -177,13 +173,13 @@
             </div>
         </div>
 
-        <!-- 巨大ブーストメーター -->
+        <!-- ブーストメーター -->
         <div id="big-boost-card" class="w-full max-w-[380px] glass-card py-2 px-3 flex flex-col justify-between pointer-events-auto relative overflow-hidden shrink-0 mt-1 h-[75px]">
             <div class="absolute -right-4 -top-4 text-white/5 text-[60px] pointer-events-none"><i class="fa-solid fa-gauge-simple-high"></i></div>
             <div class="flex justify-between items-start mb-1 z-10 w-full relative pt-1 px-1">
                 <span class="text-[8px] font-bold font-mono tracking-widest text-gray-400 flex items-center gap-1"><i class="fa-solid fa-gauge-simple-high text-gray-500"></i> TURBO BOOST</span>
                 <div class="flex items-baseline gap-0.5 mt-[-4px]">
-                    <span id="big-boost-value" class="text-[26px] font-bold font-mono text-white leading-none transition-colors duration-200">0.00</span>
+                    <span id="big-boost-value" class="text-[26px] font-bold font-mono text-white leading-none">0.00</span>
                     <span class="text-[8px] text-gray-500 font-mono">BAR</span>
                 </div>
             </div>
@@ -210,7 +206,7 @@
                 <div class="flex items-baseline justify-between leading-none"><span id="speed-value" class="text-sm font-bold font-mono text-white leading-none">0</span><span class="text-[5px] text-gray-500 font-semibold uppercase">km/h</span></div>
                 <div class="text-[5px] text-gray-500 font-mono flex justify-between border-t border-white/5 pt-0.5 mt-auto"><span>MAX</span><span id="peak-speed">0</span></div>
             </div>
-            <div id="coolant-card" class="glass-card p-1.5 px-2 flex flex-col justify-between transition-colors duration-300">
+            <div id="coolant-card" class="glass-card p-1.5 px-2 flex flex-col justify-between">
                 <div class="flex items-center justify-between text-gray-500 text-[6px] font-bold font-mono"><span>COOLANT</span><i id="coolant-icon" class="fa-solid fa-thermometer-half text-green-500/70"></i></div>
                 <div class="flex items-baseline justify-between leading-none"><span id="coolant-value" class="text-sm font-bold font-mono text-white leading-none">85</span><span class="text-[5px] text-gray-500 font-semibold uppercase">°C</span></div>
                 <div class="text-[5px] text-gray-500 font-mono flex justify-between border-t border-white/5 pt-0.5 mt-auto"><span>MAX</span><span id="peak-coolant">85</span></div>
@@ -223,13 +219,13 @@
         </div>
     </main>
 
-    <!-- 右カラム -->
+    <!-- 右カラム (コンソール) -->
     <aside class="w-[23%] max-w-[210px] flex flex-col justify-between py-0.5 relative z-10">
         <div id="panel-console" class="flex-1 rounded-xl bg-black/90 border border-white/5 overflow-hidden flex flex-col h-full pointer-events-auto">
             <div class="bg-zinc-900/60 p-1.5 text-[8px] font-bold text-gray-500 font-mono tracking-wider border-b border-white/5 flex justify-between items-center">
                 <span class="flex items-center gap-1"><i class="fa-solid fa-terminal text-[#D1121C]"></i> CAN-BUS</span>
                 <div class="flex items-center gap-2">
-                    <button onclick="clearConsoleLog()" class="text-[7px] text-gray-400 hover:text-white border border-white/10 px-1 rounded transition-all">CLEAR</button>
+                    <button onclick="UI.clearConsole()" class="text-[7px] text-gray-400 hover:text-white border border-white/10 px-1 rounded transition-all">CLEAR</button>
                     <span id="console-live-badge" class="text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping"></span> LIVE</span>
                 </div>
             </div>
@@ -240,128 +236,673 @@
     </aside>
 </div>
 
-<!-- Gセンサー誘導モーダル -->
+<!-- モーダル群 -->
 <div id="g-sensor-modal" class="hidden fixed inset-0 bg-black/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="w-full max-w-sm glass-card bg-zinc-950/95 border-blue-500/20 p-5 shadow-2xl flex flex-col gap-4 text-center">
         <div class="text-blue-400 text-3xl mb-2 animate-bounce"><i class="fa-solid fa-mobile-screen-button"></i></div>
         <h3 class="font-bold text-sm tracking-widest text-white">G-SENSOR ACTIVATION</h3>
-        <p class="text-[10px] text-gray-400 leading-relaxed">
-            OBDとの接続が確立しました。<br>
-            正確なGフォースを計測するため、スマートフォンをホルダーに固定し、センサーを有効にしてください。
-        </p>
+        <p class="text-[10px] text-gray-400 leading-relaxed">OBDとの接続が確立しました。<br>正確なGフォースを計測するため、スマートフォンを固定し有効にしてください。</p>
         <div class="flex gap-2 mt-2">
-            <button onclick="skipGSensor()" class="flex-1 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-gray-300 text-[10px] font-bold font-mono tracking-widest transition-all">SKIP</button>
-            <button onclick="enableGSensor()" class="flex-[2] py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)]">ENABLE & CALIBRATE</button>
+            <button onclick="GForce.skip()" class="flex-1 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-gray-300 text-[10px] font-bold font-mono tracking-widest transition-all">SKIP</button>
+            <button onclick="GForce.enable()" class="flex-[2] py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)]">ENABLE & CALIBRATE</button>
         </div>
     </div>
 </div>
 
-<!-- 設定モーダル -->
 <div id="settings-modal" class="hidden fixed inset-0 bg-black/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="w-full max-w-sm glass-card bg-zinc-950/95 border-gray-500/20 p-5 shadow-2xl flex flex-col gap-4">
         <div class="flex justify-between items-center border-b border-white/5 pb-2">
             <h3 class="font-bold text-xs tracking-widest text-gray-300"><i class="fa-solid fa-gear"></i> APP SETTINGS</h3>
-            <button onclick="closeSettings()" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
+            <button onclick="UI.closeSettings()" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="flex flex-col gap-2">
-            <label class="text-[10px] text-gray-400 font-mono">GEMINI API KEY (For AI Mechanic)</label>
+            <label class="text-[10px] text-gray-400 font-mono">GEMINI API KEY</label>
             <input type="password" id="api-key-input" class="w-full bg-black border border-gray-600 rounded p-2 text-xs text-white font-mono focus:border-blue-500 focus:outline-none" placeholder="AIxxx...">
-            <p class="text-[8px] text-gray-500">※キーはiPhone内にのみ保存され、外部サーバーには送信されません。</p>
+            <p class="text-[8px] text-gray-500">キーはローカルのみ保存されます。</p>
         </div>
-        <button onclick="saveSettings()" class="w-full py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all">SAVE SETTINGS</button>
+        <button onclick="UI.saveSettings()" class="w-full py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all">SAVE SETTINGS</button>
     </div>
 </div>
 
-<!-- DTCモーダル -->
 <div id="dtc-modal" class="hidden fixed inset-0 bg-black/80 backdrop-filter backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="w-full max-w-md glass-card bg-zinc-950/95 border-red-500/20 p-5 shadow-2xl flex flex-col gap-4">
         <div class="flex justify-between items-center border-b border-white/5 pb-2">
-            <h3 class="font-bold text-xs tracking-widest text-red-500 flex items-center gap-2">
-                <i class="fa-solid fa-triangle-exclamation animate-pulse"></i> ECU DEEP DIAGNOSTICS
-            </h3>
-            <button onclick="closeDTCScan()" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="font-bold text-xs tracking-widest text-red-500 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation animate-pulse"></i> ECU DEEP DIAGNOSTICS</h3>
+            <button onclick="DTC.close()" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        
         <div id="ai-response-area" class="hidden mb-2 p-3 bg-blue-950/30 border border-blue-500/30 rounded-lg max-h-[150px] overflow-y-auto">
             <div class="text-[10px] text-blue-400 font-bold mb-1 flex items-center gap-1"><i class="fa-solid fa-robot"></i> GEMINI AI MECHANIC</div>
             <div id="ai-response-text" class="text-[9px] text-gray-300 leading-relaxed markdown-body"></div>
         </div>
-
         <div class="flex flex-col gap-3 min-h-[160px] max-h-[220px] overflow-y-auto pr-1">
             <div class="flex justify-between text-[10px] font-mono bg-white/5 p-1.5 rounded border border-white/5">
-                <span class="text-gray-400">ECU VIN CODE (Mode 09):</span>
-                <span id="dtc-vin-code" class="text-white font-bold">---</span>
+                <span class="text-gray-400">ECU VIN CODE:</span> <span id="dtc-vin-code" class="text-white font-bold">---</span>
             </div>
             <div id="dtc-loading-area" class="hidden flex flex-col items-center justify-center gap-2 py-8">
                 <i class="fa-solid fa-circle-notch fa-spin text-red-500 text-xl"></i>
-                <span class="text-[10px] font-mono text-gray-400">ECU深層スキャン実行中...</span>
+                <span class="text-[10px] font-mono text-gray-400">スキャン実行中...</span>
             </div>
             <div id="dtc-status-log" class="text-[10px] font-mono flex flex-col gap-1.5">
-                <div class="text-gray-500">「RUN SCAN」で未確定エラー(Pending)も含めて深層読取します。</div>
+                <div class="text-gray-500">「RUN SCAN」で未確定エラーも含めて読取します。</div>
             </div>
         </div>
-        
         <div class="flex flex-wrap justify-between gap-2 pt-2 border-t border-white/5">
-            <button onclick="clearDTCFaults()" id="dtc-clear-btn" class="hidden flex-1 py-2 rounded bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all">CLEAR</button>
-            <button onclick="askGeminiMechanic()" id="dtc-ai-btn" class="hidden flex-1 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_10px_rgba(79,70,229,0.5)]"><i class="fa-solid fa-wand-magic-sparkles"></i> ASK AI</button>
-            <button onclick="startDTCScanProcess()" id="dtc-run-btn" class="flex-1 w-full py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all">RUN DEEP SCAN</button>
+            <button onclick="DTC.clearFaults()" id="dtc-clear-btn" class="hidden flex-1 py-2 rounded bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all">CLEAR</button>
+            <button onclick="DTC.askAI()" id="dtc-ai-btn" class="hidden flex-1 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_10px_rgba(79,70,229,0.5)]"><i class="fa-solid fa-wand-magic-sparkles"></i> ASK AI</button>
+            <button onclick="DTC.startProcess()" id="dtc-run-btn" class="flex-1 w-full py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all">RUN DEEP SCAN</button>
         </div>
     </div>
 </div>
 
 <script>
-    function applyScreenScale() {
-        const wrapper = document.getElementById('app-wrapper');
-        const targetWidth = 852; const targetHeight = 393;
-        const isMobile = (window.innerWidth <= 950 && window.innerHeight <= 450) || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        
-        if (isMobile) {
-            const scale = Math.min(window.innerWidth / targetWidth, window.innerHeight / targetHeight);
-            wrapper.style.width = `${targetWidth}px`; wrapper.style.height = `${targetHeight}px`;
-            wrapper.style.transform = `scale(${scale})`; wrapper.style.borderRadius = '0'; wrapper.style.border = 'none'; wrapper.style.boxShadow = 'none';
-        } else {
-            let scale = Math.min(window.innerWidth / (targetWidth + 40), window.innerHeight / (targetHeight + 40));
-            if (scale > 1.0) scale = 1.0; 
-            wrapper.style.width = `${targetWidth}px`; wrapper.style.height = `${targetHeight}px`;
-            wrapper.style.transform = `scale(${scale})`; wrapper.style.borderRadius = '38px'; wrapper.style.border = '6px solid #1a1a1c'; wrapper.style.boxShadow = '0 20px 50px rgba(0,0,0,0.8)';
-        }
-    }
-    window.addEventListener('resize', applyScreenScale); window.addEventListener('DOMContentLoaded', applyScreenScale);
+/**
+ * =========================================================
+ * 1. 状態管理 (State Management)
+ * =========================================================
+ */
+const State = {
+    mode: 'natural',
+    isSimulation: true,
+    isRetroSkin: false,
+    isConnected: false,
+    isDTCScanning: false,
+    lastWarningTime: 0
+};
 
-    let audioCtx = null;
-    function playAlertSound(frequency, duration) {
+// カラーパレット
+const colors = { alfaRed: '#D1121C', coolBlue: '#3B82F6', grayNatural: '#9CA3AF', garageRed: '#de000a' };
+
+// 実際の車のデータ (目標値)
+const CarData = {
+    rpm: 800, speed: 0, coolant: 85, intake: 24, boost: 0.0, map: 100, baro: 101, throttle: 0, pedal: 0, timing: 0, hp: 0, torque: 0
+};
+const Peaks = { rpm: 0, speed: 0, coolant: 0, dynamic: 0.0, hp: 0, torque: 0 };
+
+// アニメーション用 (物理演算後の現在値)
+const AnimData = {
+    rpm: { val: 800, vel: 0 },
+    speed: { val: 0, vel: 0 },
+    boost: { val: 0, vel: 0 },
+    hp: { val: 0, vel: 0 },
+    torque: { val: 0, vel: 0 },
+    coolant: { val: 85, vel: 0 },
+    intake: { val: 24, vel: 0 },
+    gX: { val: 0 }, // GセンサーはLPFで処理するためvelは不要
+    gY: { val: 0 }
+};
+
+// Gセンサーデバイス入力用
+const RawG = { x: 0, y: 0 };
+const FilteredG = { x: 0, y: 0 };
+let GOffset = { x: 0, y: 0 };
+let GPeak = 0;
+let GPeakCoords = { x: 0, y: 0 };
+
+// 描画用キャッシュ
+let gHistory = [];
+const MAX_G_HISTORY = 12;
+let lastGHistoryTime = 0;
+
+/**
+ * =========================================================
+ * 2. ユーティリティ・機能モジュール (Utilities)
+ * =========================================================
+ */
+const Utils = {
+    audioCtx: null,
+    playBeep: function(frequency, duration) {
         try {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.type = 'sine'; osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.12, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
-            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + duration);
+            if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(frequency, this.audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.12, this.audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(this.audioCtx.destination);
+            osc.start(); osc.stop(this.audioCtx.currentTime + duration);
         } catch (e) {}
-    }
-
-    function playWarningBeeps() {
+    },
+    playWarning: function() {
         try {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (!this.audioCtx) this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (this.audioCtx.state === 'suspended') this.audioCtx.resume();
             const beep = (timeOffset) => {
-                const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-                osc.type = 'square'; osc.frequency.setValueAtTime(1500, audioCtx.currentTime + timeOffset);
-                gain.gain.setValueAtTime(0, audioCtx.currentTime + timeOffset); gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + timeOffset + 0.01);
-                gain.gain.setValueAtTime(0.08, audioCtx.currentTime + timeOffset + 0.08); gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + timeOffset + 0.1);
-                osc.connect(gain); gain.connect(audioCtx.destination); osc.start(audioCtx.currentTime + timeOffset); osc.stop(audioCtx.currentTime + timeOffset + 0.1);
+                const osc = this.audioCtx.createOscillator(); const gain = this.audioCtx.createGain();
+                osc.type = 'square'; osc.frequency.setValueAtTime(1500, this.audioCtx.currentTime + timeOffset);
+                gain.gain.setValueAtTime(0, this.audioCtx.currentTime + timeOffset); 
+                gain.gain.linearRampToValueAtTime(0.08, this.audioCtx.currentTime + timeOffset + 0.01);
+                gain.gain.setValueAtTime(0.08, this.audioCtx.currentTime + timeOffset + 0.08); 
+                gain.gain.linearRampToValueAtTime(0, this.audioCtx.currentTime + timeOffset + 0.1);
+                osc.connect(gain); gain.connect(this.audioCtx.destination); 
+                osc.start(this.audioCtx.currentTime + timeOffset); osc.stop(this.audioCtx.currentTime + timeOffset + 0.1);
             };
             beep(0); beep(0.15); beep(0.3); 
         } catch (e) {}
     }
+};
 
-    function skipGSensor() { document.getElementById('g-sensor-modal').classList.add('hidden'); }
-    async function enableGSensor() { document.getElementById('g-sensor-modal').classList.add('hidden'); await calibrateGForce(); }
-    function openSettings() { document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key') || ""; document.getElementById('settings-modal').classList.remove('hidden'); }
-    function closeSettings() { document.getElementById('settings-modal').classList.add('hidden'); }
-    function saveSettings() { localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value); closeSettings(); logConsole("API Key saved.", "system"); }
+const UI = {
+    els: {},
+    init: function() {
+        ['rpm-value', 'speed-value', 'coolant-value', 'dynamic-card-value', 'gauge-arc', 'dial-glow', 'shift-indicator', 
+         'dna-status-label', 'connection-status', 'status-indicator', 'console-logs-container', 'dynamic-card-title', 
+         'dynamic-card-icon', 'lat-g-value', 'long-g-value', 'peak-g-value', 'hp-value', 'torque-value', 'hp-bar', 
+         'torque-bar', 'big-boost-value', 'big-boost-bar-rect', 'peak-speed', 'peak-coolant', 'peak-dynamic', 'peak-hp', 
+         'peak-torque', 'g-canvas', 'connect-text', 'connect-icon', 'brand-logo', 'dna-switch-container', 
+         'brand-carousel-container', 'flash-overlay', 'coolant-card', 'big-boost-card'].forEach(id => {
+            this.els[id] = document.getElementById(id);
+        });
+        
+        if (this.els['g-canvas']) {
+            this.gCtx = this.els['g-canvas'].getContext('2d');
+        }
+        this.scaleScreen();
+        window.addEventListener('resize', () => this.scaleScreen());
+    },
+    scaleScreen: function() {
+        const wrapper = document.getElementById('app-wrapper');
+        const tw = 852, th = 393;
+        const isMobile = (window.innerWidth <= 950 && window.innerHeight <= 450) || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+            const s = Math.min(window.innerWidth / tw, window.innerHeight / th);
+            wrapper.style.width = `${tw}px`; wrapper.style.height = `${th}px`;
+            wrapper.style.transform = `scale(${s})`; wrapper.style.borderRadius = '0'; wrapper.style.border = 'none'; wrapper.style.boxShadow = 'none';
+        } else {
+            let s = Math.min(window.innerWidth / (tw + 40), window.innerHeight / (th + 40));
+            if (s > 1.0) s = 1.0;
+            wrapper.style.width = `${tw}px`; wrapper.style.height = `${th}px`;
+            wrapper.style.transform = `scale(${s})`; wrapper.style.borderRadius = '38px'; wrapper.style.border = '6px solid #1a1a1c'; wrapper.style.boxShadow = '0 20px 50px rgba(0,0,0,0.8)';
+        }
+    },
+    log: function(msg, type='system') {
+        const time = new Date().toLocaleTimeString('ja-JP', { hour12: false }) + '.' + String(Math.floor(Math.random() * 99)).padStart(2, '0');
+        let col = 'text-cyan-400';
+        if(type==='tx') col='text-green-400'; if(type==='rx') col='text-cyan-300 font-bold'; 
+        if(type==='error') col='text-red-500 font-extrabold'; if(type==='system') col='text-gray-500 opacity-80';
+        
+        CSV.debugLogs.push(`[${new Date().toISOString()}] [${type.toUpperCase()}] ${msg}`);
+        
+        const c = this.els['console-logs-container'];
+        if (c) {
+            const div = document.createElement('div'); div.className = `${col} flex justify-between gap-2`;
+            div.innerHTML = `<span>${time} | ${msg}</span>`;
+            c.insertBefore(div, c.firstChild);
+            if (c.children.length > 30) c.removeChild(c.lastChild);
+        }
+    },
+    clearConsole: function() {
+        if(this.els['console-logs-container']) this.els['console-logs-container'].innerHTML = '<div class="text-green-500 opacity-60">Log cleared.</div>';
+    },
+    openSettings: function() { document.getElementById('api-key-input').value = localStorage.getItem('gemini_api_key') || ""; document.getElementById('settings-modal').classList.remove('hidden'); },
+    closeSettings: function() { document.getElementById('settings-modal').classList.add('hidden'); },
+    saveSettings: function() { localStorage.setItem('gemini_api_key', document.getElementById('api-key-input').value); this.closeSettings(); this.log("API Key saved.", "system"); }
+};
 
-    async function askGeminiMechanic() {
+/**
+ * =========================================================
+ * 3. アニメーション＆描画エンジン (Master Render Loop)
+ * ==========================================
+ */
+const Engine = {
+    // 【物理スプリング演算】最も評価が高かったバネモデル＋スナップ処理
+    updatePhysics: function(key, target, stiffness, damping, snapThreshold = 0.5) {
+        let force = (target - AnimData[key].val) * stiffness;
+        AnimData[key].vel = (AnimData[key].vel + force) * damping;
+        AnimData[key].val += AnimData[key].vel;
+        // スナップ（微細なプルプルを完全に止める）
+        // ★ V44.2 FIX: snapThresholdを引数化し、ブースト等の小数点スケールに対応
+        if (Math.abs(AnimData[key].vel) < 0.02 && Math.abs(target - AnimData[key].val) < snapThreshold) {
+            AnimData[key].vel = 0;
+            AnimData[key].val = target;
+        }
+    },
+    // 【LPF演算】Gセンサー用の滑らかなフィルター
+    updateLPF: function(key, target, alpha) {
+        AnimData[key].val += (target - AnimData[key].val) * alpha;
+    },
+    
+    loop: function(now) {
+        // メーター類の物理演算
+        // ★ V44.2 FIX: ブーストのみ、スナップ(ワープ)の閾値を 0.01 に極小化してパラパラ漫画を防止
+        this.updatePhysics('rpm', CarData.rpm, 0.08, 0.80, 0.5);
+        this.updatePhysics('boost', CarData.boost, 0.10, 0.75, 0.01);
+        this.updatePhysics('speed', CarData.speed, 0.04, 0.85, 0.5);
+        this.updatePhysics('hp', CarData.hp, 0.06, 0.80, 0.5);
+        this.updatePhysics('torque', CarData.torque, 0.06, 0.80, 0.5);
+        this.updatePhysics('coolant', CarData.coolant, 0.02, 0.90, 0.5);
+        this.updatePhysics('intake', CarData.intake, 0.02, 0.90, 0.5);
+
+        // Gセンサー専用のLPF演算
+        let targetGX = State.isSimulation ? Sim.g.x : FilteredG.x;
+        let targetGY = State.isSimulation ? Sim.g.y : FilteredG.y;
+        this.updateLPF('gX', targetGX, 0.15);
+        this.updateLPF('gY', targetGY, 0.15);
+
+        this.updateDOM();
+        
+        // Gセンサーレーダーの軌跡保存と描画
+        if (now - lastGHistoryTime > 60) {
+            gHistory.push({ x: AnimData.gX.val, y: AnimData.gY.val });
+            if (gHistory.length > MAX_G_HISTORY) gHistory.shift();
+            lastGHistoryTime = now;
+        }
+        this.drawRadar();
+
+        requestAnimationFrame(t => this.loop(t));
+    },
+
+    updateDOM: function() {
+        UI.els['rpm-value'].textContent = Math.round(AnimData.rpm.val);
+        UI.els['speed-value'].textContent = Math.round(AnimData.speed.val);
+        UI.els['coolant-value'].textContent = Math.round(AnimData.coolant.val);
+        UI.els['lat-g-value'].textContent = AnimData.gX.val.toFixed(2) + " G";
+        UI.els['long-g-value'].textContent = AnimData.gY.val.toFixed(2) + " G";
+
+        if (State.mode === 'dynamic') { UI.els['dynamic-card-value'].textContent = AnimData.boost.val.toFixed(2); } 
+        else { UI.els['dynamic-card-value'].textContent = Math.round(AnimData.intake.val); }
+        
+        UI.els['gauge-arc'].style.strokeDashoffset = 534 - (Math.min(AnimData.rpm.val / 8000, 1.0) * 534);
+
+        UI.els['hp-value'].textContent = Math.round(AnimData.hp.val);
+        UI.els['torque-value'].textContent = Math.round(AnimData.torque.val);
+        UI.els['hp-bar'].style.width = `${Math.min(AnimData.hp.val / 220 * 100, 100)}%`;
+        UI.els['torque-bar'].style.width = `${Math.min(AnimData.torque.val / 350 * 100, 100)}%`;
+
+        UI.els['big-boost-value'].textContent = AnimData.boost.val.toFixed(2);
+        let bVal = AnimData.boost.val;
+        let bRect = UI.els['big-boost-bar-rect'];
+        bRect.style.width = `${Math.min(bVal / 1.5 * 100, 100)}%`;
+        if (bVal < 1.0) { bRect.setAttribute('fill', 'url(#boost-grad-normal)'); bRect.style.filter = "drop-shadow(0 0 6px rgba(255,255,255,0.6))"; UI.els['big-boost-value'].style.color = "#ffffff"; } 
+        else if (bVal < 1.3) { bRect.setAttribute('fill', '#facc15'); bRect.style.filter = "drop-shadow(0 0 10px rgba(250,204,21,0.8))"; UI.els['big-boost-value'].style.color = "#facc15"; } 
+        else { bRect.setAttribute('fill', '#dc2626'); bRect.style.filter = "drop-shadow(0 0 15px rgba(220,38,38,0.9))"; UI.els['big-boost-value'].style.color = "#dc2626"; }
+    },
+
+    drawRadar: function() {
+        const ctx = UI.gCtx; const cvs = UI.els['g-canvas'];
+        if (!ctx || !cvs) return;
+        const w = cvs.width, h = cvs.height, cx = w / 2, cy = h / 2, scale = cx / 0.8;
+        
+        ctx.clearRect(0, 0, w, h); ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(cx, cy, 0.5 * scale, 0, 2 * Math.PI); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx, cy, 1.0 * scale, 0, 2 * Math.PI); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke();
+        
+        if (gHistory.length > 1) {
+            for (let i = 1; i < gHistory.length; i++) {
+                ctx.beginPath(); ctx.moveTo(cx + gHistory[i-1].x * scale, cy - gHistory[i-1].y * scale); ctx.lineTo(cx + gHistory[i].x * scale, cy - gHistory[i].y * scale);
+                let progress = i / gHistory.length; let opacity = Math.pow(progress, 2) * 0.85;
+                ctx.strokeStyle = State.isRetroSkin ? `rgba(209,18,28,${opacity})` : (State.mode === 'dynamic' ? `rgba(209,18,28,${opacity})` : (State.mode === 'allweather' ? `rgba(59,130,246,${opacity})` : `rgba(34,211,238,${opacity})`));
+                ctx.lineWidth = 1.5 + (progress * 4.0); ctx.stroke();
+            }
+        }
+        
+        if (GPeak > 0.05) {
+            let px = cx + GPeakCoords.x * scale, py = cy - GPeakCoords.y * scale; px = Math.max(8, Math.min(w-8, px)); py = Math.max(8, Math.min(h-8, py));
+            ctx.stroke(new Path2D(`M ${px-4} ${py-4} L ${px+4} ${py+4} M ${px+4} ${py-4} L ${px-4} ${py+4}`)); ctx.beginPath(); ctx.arc(px, py, 4, 0, 2 * Math.PI); ctx.strokeStyle='rgba(251,191,36,0.7)'; ctx.lineWidth=2; ctx.stroke();
+        }
+        
+        let curX = cx + AnimData.gX.val * scale, curY = cy - AnimData.gY.val * scale; curX = Math.max(8, Math.min(w-8, curX)); curY = Math.max(8, Math.min(h-8, curY));
+        ctx.beginPath(); ctx.arc(curX, curY, 6, 0, 2 * Math.PI); ctx.fillStyle = State.isRetroSkin ? colors.alfaRed : (State.mode === 'dynamic' ? colors.alfaRed : (State.mode === 'allweather' ? colors.coolBlue : '#22D3EE')); ctx.fill();
+    }
+};
+
+/**
+ * =========================================================
+ * 4. データ計算＆シミュレーションモジュール
+ * =========================================================
+ */
+const Calc = {
+    processEngineData: function() {
+        let currentMap = CarData.map || 100;
+        if (State.isSimulation) currentMap = (CarData.boost > 0) ? (CarData.boost * 100 + 100) : (30 + (CarData.rpm/8000)*70);
+        let rpmFactor = 1.0; if (CarData.rpm < 2500) { rpmFactor = Math.max(0.2, CarData.rpm / 2500); } else if (CarData.rpm > 5000) { rpmFactor = Math.max(0.6, 1.0 - ((CarData.rpm - 5000) / 4000)); }
+        CarData.torque = currentMap * 1.05 * rpmFactor; CarData.hp = (CarData.torque * CarData.rpm) / 7022.0;
+
+        if (CarData.rpm > Peaks.rpm) Peaks.rpm = CarData.rpm; if (CarData.speed > Peaks.speed) Peaks.speed = CarData.speed; if (CarData.coolant > Peaks.coolant) Peaks.coolant = CarData.coolant;
+        if (State.mode === 'dynamic') { if (CarData.boost > Peaks.dynamic) Peaks.dynamic = CarData.boost; } else { if (CarData.intake > Peaks.dynamic) Peaks.dynamic = CarData.intake; }
+        if (CarData.hp > Peaks.hp) Peaks.hp = CarData.hp; if (CarData.torque > Peaks.torque) Peaks.torque = CarData.torque;
+
+        UI.els['peak-speed'].textContent = Math.round(Peaks.speed); UI.els['peak-coolant'].textContent = Math.round(Peaks.coolant);
+        UI.els['peak-dynamic'].textContent = State.mode === 'dynamic' ? Peaks.dynamic.toFixed(2) : Math.round(Peaks.dynamic);
+        UI.els['peak-hp'].textContent = Math.round(Peaks.hp); UI.els['peak-torque'].textContent = Math.round(Peaks.torque);
+
+        if (CarData.rpm > 6000) { 
+            UI.els['dial-glow'].classList.add('redline-glow'); UI.els['rpm-value'].classList.add('text-[#D1121C]'); 
+            if (State.mode === 'dynamic') UI.els['shift-indicator'].classList.remove('hidden'); 
+            UI.els['flash-overlay'].classList.add('shift-flash-active'); 
+        } else { 
+            UI.els['dial-glow'].classList.remove('redline-glow'); 
+            if (!State.isRetroSkin) UI.els['rpm-value'].classList.remove('text-[#D1121C]'); 
+            UI.els['shift-indicator'].classList.add('hidden'); UI.els['flash-overlay'].classList.remove('shift-flash-active'); 
+        }
+        this.checkWarnings();
+    },
+    checkWarnings: function() {
+        const now = Date.now(); let isWarn = false;
+        if (CarData.coolant >= 95) { UI.els['coolant-card'].classList.add('warning-active'); isWarn = true; } else { UI.els['coolant-card'].classList.remove('warning-active'); }
+        if (CarData.boost >= 1.4) { UI.els['big-boost-card'].classList.add('warning-active'); isWarn = true; } else { UI.els['big-boost-card'].classList.remove('warning-active'); }
+        if (isWarn && now - State.lastWarningTime > 2000) { Utils.playWarning(); State.lastWarningTime = now; }
+    }
+};
+
+const Sim = {
+    timer: null,
+    time: 0,
+    g: { x: 0, y: 0 },
+    start: function() {
+        State.isSimulation = true; this.time = 0;
+        UI.els['connect-text'].textContent = "Connect Car"; UI.els['connect-icon'].className = "fa-solid fa-bluetooth";
+        UI.els['status-indicator'].className = "w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"; UI.els['connection-status'].textContent = "Demo Mode";
+        if (this.timer) clearInterval(this.timer);
+        
+        // デモ更新は滑らかに見える 150ms に設定
+        this.timer = setInterval(() => {
+            this.time += 0.15;
+            CarData.rpm = 3800 + Math.sin(this.time) * 3000;
+            CarData.speed = 40 + Math.sin(this.time) * 20;
+            CarData.boost = Math.max(0, Math.sin(this.time) * 1.6);
+            CarData.coolant = 85 + Math.sin(this.time * 0.2) * 15;
+            CarData.baro = 101;
+            CarData.pedal = (CarData.rpm > 1500) ? Math.min(100, 50 + Math.sin(this.time)*60) : 0;
+            CarData.throttle = (CarData.boost > 1.2) ? 20 : CarData.pedal;
+            CarData.timing = 15 + Math.sin(this.time)*5;
+            
+            this.g.x = Math.sin(this.time * 1.5) * 0.45;
+            this.g.y = (CarData.speed / 100) * 0.35 + (Math.sin(this.time * 0.8) > 0 ? 0.3 : -0.2);
+            let mag = Math.sqrt(this.g.x * this.g.x + this.g.y * this.g.y);
+            if (mag > GPeak) { GPeak = mag; GPeakCoords = {x: this.g.x, y: this.g.y}; UI.els['peak-g-value'].textContent = GPeak.toFixed(2) + " G"; }
+            
+            Calc.processEngineData();
+        }, 150);
+    },
+    stop: function() { if(this.timer) clearInterval(this.timer); }
+};
+
+/**
+ * =========================================================
+ * 5. OBD-II BLE 通信モジュール (Ping-Pong Polling)
+ * =========================================================
+ */
+const OBD = {
+    pollTick: 0,
+    timeoutTimer: null,
+    rxBuffer: "",
+    
+    toggleConnection: function() {
+        if (State.isSimulation) this.connect(); else this.disconnect();
+    },
+    connect: async function() {
+        UI.log("Scanning for OBD-II...", "system");
+        try {
+            bluetoothDevice = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: TARGET_SERVICE_UUIDS });
+            bluetoothDevice.addEventListener('gattserverdisconnected', () => this.onDisconnected());
+            const server = await bluetoothDevice.gatt.connect();
+            
+            txCharacteristic = null; rxCharacteristic = null;
+            const services = await server.getPrimaryServices();
+            for (const service of services) {
+                const chars = await service.getCharacteristics();
+                for (const char of chars) {
+                    if (char.properties.notify || char.properties.indicate) rxCharacteristic = char;
+                    if (char.properties.write || char.properties.writeWithoutResponse) txCharacteristic = char;
+                }
+                if (txCharacteristic && rxCharacteristic) break;
+            }
+            if (!txCharacteristic || !rxCharacteristic) throw new Error("TX/RX ports not found.");
+
+            await rxCharacteristic.startNotifications();
+            rxCharacteristic.addEventListener('characteristicvaluechanged', (e) => this.handleRX(e));
+
+            UI.log("Connected. Init ELM327...", "system");
+            await this.sendCmd("ATZ\r"); await delay(800); 
+            await this.sendCmd("ATE0\r"); await delay(200); 
+            await this.sendCmd("ATH0\r"); await delay(200); 
+            await this.sendCmd("ATS0\r"); await delay(200); 
+            await this.sendCmd("ATSP0\r"); await delay(200);
+            
+            Sim.stop();
+            State.isSimulation = false;
+            UI.els['connect-text'].textContent = "Disconnect"; UI.els['connect-icon'].className = "fa-solid fa-circle-xmark";
+            UI.els['status-indicator'].className = "w-1.5 h-1.5 rounded-full bg-green-500"; UI.els['connection-status'].textContent = "OBD Ready";
+            
+            CSV.debugLogs = []; isWaitingForResponse = false; this.rxBuffer = "";
+            UI.log("Init complete. Ping-Pong polling started.", "system");
+
+            document.getElementById('g-sensor-modal').classList.remove('hidden');
+
+            CSV.start();
+            this.pollNext();
+        } catch (error) { UI.log("Connect failed: " + error.message, "error"); Sim.start(); }
+    },
+    disconnect: function() {
+        isWaitingForResponse = false; clearTimeout(this.timeoutTimer);
+        if (bluetoothDevice && bluetoothDevice.gatt.connected) { try { bluetoothDevice.gatt.disconnect(); } catch(e){} }
+        UI.log("Disconnected by User.", "system"); CSV.stop(); Sim.start();
+    },
+    onDisconnected: function() {
+        isWaitingForResponse = false; clearTimeout(this.timeoutTimer);
+        UI.log("Device Connection Lost.", "error"); CSV.stop(); Sim.start();
+    },
+    sendCmd: async function(cmd) {
+        if (!txCharacteristic) return;
+        try {
+            if (txCharacteristic.properties.writeWithoutResponse) { await txCharacteristic.writeValueWithoutResponse(new TextEncoder().encode(cmd)); } 
+            else { await txCharacteristic.writeValue(new TextEncoder().encode(cmd)); }
+        } catch(e) { UI.log("Write fail: " + e.message, "error"); }
+    },
+    pollNext: function() {
+        if (!txCharacteristic || State.isSimulation || State.isDTCScanning || isWaitingForResponse) return;
+        isWaitingForResponse = true; this.pollTick++; let cmd = "";
+        
+        // 最速・最強のPing-Pong方式 (RPMとブーストを交互に要求し、10回に1回他を要求)
+        if (this.pollTick % 10 === 0) {
+            let cycle = (Math.floor(this.pollTick / 10)) % 6;
+            if (cycle === 0) cmd = "010D1";      // Speed
+            else if (cycle === 1) cmd = "01051"; // Coolant
+            else if (cycle === 2) cmd = "010F1"; // Intake
+            else if (cycle === 3) cmd = "01111"; // Throttle
+            else if (cycle === 4) cmd = "01491"; // Pedal
+            else if (cycle === 5) cmd = "010E1"; // Timing
+        } else {
+            if (this.pollTick % 2 === 0) { cmd = "010B1"; } else { cmd = "010C1"; }
+        }
+        
+        this.sendCmd(cmd + "\r");
+        this.timeoutTimer = setTimeout(() => {
+            UI.log(`Timeout! Recovery sequence started.`, "error");
+            this.sendCmd("\r");
+            setTimeout(() => { isWaitingForResponse = false; this.rxBuffer = ""; this.pollNext(); }, 1000);
+        }, 1500); 
+    },
+    handleRX: function(e) {
+        const text = new TextDecoder().decode(e.target.value);
+        this.rxBuffer += text;
+
+        if (this.rxBuffer.includes('>')) {
+            const cleanRes = this.rxBuffer.replace(/[\r\n>]/g, '').trim();
+            if (cleanRes.length > 0 && !cleanRes.includes("?") && !cleanRes.includes("NODATA") && !cleanRes.includes("ERROR")) {
+                if (!State.isDTCScanning) this.parse(cleanRes);
+            }
+            if (!State.isDTCScanning) {
+                this.rxBuffer = ""; 
+                if (isWaitingForResponse) {
+                    clearTimeout(this.timeoutTimer);
+                    isWaitingForResponse = false;
+                    setTimeout(() => this.pollNext(), 0); 
+                }
+            }
+        }
+    },
+    parse: function(res) {
+        const clean = res.replace(/\s+/g, ''); if (!clean.startsWith("41")) return;
+        const pid = clean.substring(2, 4); const hex = clean.substring(4);
+        
+        if (pid === "0C" && hex.length >= 4) { CarData.rpm = (256 * parseInt(hex.substring(0, 2), 16) + parseInt(hex.substring(2, 4), 16)) / 4; }
+        else if (pid === "0D" && hex.length >= 2) { CarData.speed = parseInt(hex.substring(0, 2), 16); }
+        else if (pid === "05" && hex.length >= 2) { CarData.coolant = parseInt(hex.substring(0, 2), 16) - 40; }
+        else if (pid === "0F" && hex.length >= 2) { CarData.intake = parseInt(hex.substring(0, 2), 16) - 40; }
+        else if (pid === "33" && hex.length >= 2) { CarData.baro = parseInt(hex.substring(0, 2), 16); }
+        else if (pid === "11" && hex.length >= 2) { CarData.throttle = parseInt(hex.substring(0, 2), 16) * 100 / 255; }
+        else if (pid === "49" && hex.length >= 2) { CarData.pedal = parseInt(hex.substring(0, 2), 16) * 100 / 255; }
+        else if (pid === "0E" && hex.length >= 2) { CarData.timing = (parseInt(hex.substring(0, 2), 16) / 2) - 64; }
+        else if (pid === "0B" && hex.length >= 2) { 
+            let mapKpa = parseInt(hex.substring(0, 2), 16); CarData.map = mapKpa; 
+            CarData.boost = Math.max(0, (mapKpa - CarData.baro) / 100.0); 
+        }
+        Calc.processEngineData();
+    }
+};
+
+/**
+ * =========================================================
+ * 6. Gセンサー モジュール (G-Force Input)
+ * =========================================================
+ */
+const GForce = {
+    skip: function() { document.getElementById('g-sensor-modal').classList.add('hidden'); },
+    enable: async function() { 
+        document.getElementById('g-sensor-modal').classList.add('hidden'); 
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            try { if (await DeviceMotionEvent.requestPermission() === 'granted') window.addEventListener('devicemotion', this.onMotion.bind(this), true); } catch (e) {}
+        } else { window.addEventListener('devicemotion', this.onMotion.bind(this), true); }
+        gCalibrating = true; 
+        setTimeout(() => { GOffset.x = rawAcc.x; GOffset.y = rawAcc.y; gCalibrating = false; GPeak = 0; GPeakCoords = {x:0,y:0}; FilteredG.x=0; FilteredG.y=0; }, 600);
+        UI.log("G-Sensor Calibrated.", "system"); Utils.playBeep(1000, 0.2);
+    },
+    onMotion: function(event) {
+        if (!event.accelerationIncludingGravity) return;
+        rawAcc.x = (event.accelerationIncludingGravity.y || 0) / 9.8; 
+        rawAcc.y = -(event.accelerationIncludingGravity.x || 0) / 9.8;
+        if (!gCalibrating && !State.isSimulation) {
+            currentG.x = rawAcc.x - GOffset.x; currentG.y = rawAcc.y - GOffset.y;
+            FilteredG.x += (currentG.x - FilteredG.x) * 0.20; 
+            FilteredG.y += (currentG.y - FilteredG.y) * 0.20;
+            let mag = Math.sqrt(FilteredG.x * FilteredG.x + FilteredG.y * FilteredG.y);
+            if (mag > GPeak) { GPeak = mag; GPeakCoords = {x: FilteredG.x, y: FilteredG.y}; UI.els['peak-g-value'].textContent = GPeak.toFixed(2) + " G"; }
+        }
+    }
+};
+
+/**
+ * =========================================================
+ * 7. CSV ロギング モジュール
+ * =========================================================
+ */
+const CSV = {
+    debugLogs: [],
+    timer: null,
+    start: function() {
+        telemetryData = ["Timestamp,RPM,Speed_kmh,Coolant_C,Intake_C,Baro_kPa,MAP_kPa,Boost_bar,Throttle_%,Pedal_%,Timing_deg,HP_PS,Torque_Nm,GLat,GLong"];
+        if (this.timer) clearInterval(this.timer);
+        this.timer = setInterval(() => {
+            if (!State.isSimulation && !State.isDTCScanning) {
+                const ts = new Date().toISOString();
+                const row = `${ts},${Math.round(CarData.rpm)},${Math.round(CarData.speed)},${Math.round(CarData.coolant)},${Math.round(CarData.intake)},${CarData.baro},${CarData.map},${CarData.boost.toFixed(2)},${Math.round(CarData.throttle)},${Math.round(CarData.pedal)},${CarData.timing.toFixed(1)},${Math.round(CarData.hp)},${Math.round(CarData.torque)},${FilteredG.x.toFixed(3)},${FilteredG.y.toFixed(3)}`;
+                telemetryData.push(row);
+            }
+        }, 100);
+    },
+    stop: function() { if (this.timer) clearInterval(this.timer); },
+    exportData: function() {
+        if (telemetryData.length <= 1) { UI.log("データなし", "error"); return; }
+        const csvContent = telemetryData.join("\n"); const fileName = `Giulietta_Telemetry_${new Date().getTime()}.csv`;
+        try {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const file = new File([blob], fileName, { type: 'text/csv' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({ files: [file], title: 'Telemetry', text: 'Giulietta Log' }).then(() => { Utils.playBeep(1100, 0.1); }).catch((e) => { this.showModal(csvContent); });
+                return;
+            }
+        } catch (e) { console.error(e); }
+        this.showModal(csvContent); Utils.playBeep(1100, 0.1);
+    },
+    showModal: function(content) {
+        const container = document.createElement('div');
+        container.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;padding:max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)) 20px;box-sizing:border-box;';
+        container.innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:10px;align-items:center;"><h3 style="color:white;margin:0;font-family:monospace;font-size:12px;">CSV DATA</h3><div style="display:flex;gap:10px;"><button id="modal-copy-close-btn" style="padding:8px 12px;background:#10b981;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;"><i class="fa-solid fa-copy"></i> COPY & CLOSE</button><button id="modal-close-btn" style="padding:8px 12px;background:#D1121C;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;">✖</button></div></div><textarea id="modal-textarea" readonly style="flex:1;width:100%;background:#111;color:#0f0;font-family:monospace;font-size:10px;padding:10px;border:1px solid #333;border-radius:4px;white-space:pre;overflow:scroll;">${content}</textarea>`;
+        document.body.appendChild(container);
+        document.getElementById('modal-copy-close-btn').onclick = () => { const textarea = document.getElementById('modal-textarea'); textarea.select(); textarea.setSelectionRange(0, 999999); try { document.execCommand('copy'); document.body.removeChild(container); UI.log("コピー完了", "system"); } catch (e) { alert('コピー失敗'); } };
+        document.getElementById('modal-close-btn').onclick = () => { document.body.removeChild(container); };
+    }
+};
+
+/**
+ * =========================================================
+ * 8. DTC 診断モジュール (Deep Diagnostics)
+ * =========================================================
+ */
+let currentDiagnosticReport = { timestamp: "", vin: "---", processLogs: [], faultCode: "", faultName: "", faultInfo: "" };
+const DTC = {
+    triggerScan: function() { document.getElementById('dtc-modal').classList.remove('hidden'); },
+    close: function() { document.getElementById('dtc-modal').classList.add('hidden'); document.getElementById('ai-response-area').classList.add('hidden'); },
+    logInfo: function(msg, type="info") {
+        const item = document.createElement('div');
+        item.className = type === "error" ? "text-red-400 font-bold" : (type === "success" ? "text-green-400" : "text-cyan-400");
+        item.innerHTML = `<span>▶ ${msg}</span>`;
+        const logArea = document.getElementById('dtc-status-log');
+        logArea.appendChild(item); logArea.parentElement.scrollTop = logArea.parentElement.scrollHeight;
+        currentDiagnosticReport.processLogs.push(`[${new Date().toLocaleTimeString('ja-JP')}] ${msg}`);
+        UI.log(`[DTC] ${msg}`, type === "error" ? "error" : "system");
+    },
+    startProcess: async function() {
+        document.getElementById('dtc-run-btn').classList.add('hidden'); document.getElementById('dtc-clear-btn').classList.add('hidden'); document.getElementById('dtc-ai-btn').classList.add('hidden'); document.getElementById('dtc-loading-area').classList.remove('hidden'); document.getElementById('dtc-status-log').innerHTML = ""; document.getElementById('ai-response-area').classList.add('hidden'); 
+        currentDiagnosticReport.timestamp = new Date().toLocaleString('ja-JP'); currentDiagnosticReport.processLogs = [];
+        
+        if (State.isSimulation || !txCharacteristic) {
+            this.logInfo("※未接続のためデモ診断を開始します"); await delay(1000); this.logInfo("車台番号(VIN)を取得中..."); await delay(1000);
+            document.getElementById('dtc-vin-code').textContent = "ZAR940000DEMO"; this.logInfo("ECUトラブルメモリを走査中..."); await delay(1000);
+            this.displayResult("P0300", "Random/Multiple Cylinder Misfire Detected", "複数シリンダーでの失火を検出。ダイナミックモードの高負荷時に発生しやすい症状です。");
+            this.displayResult("U1701", "CAN Network S&S Control Unit", "アイドリングストップ(S&S)制御ユニットとの通信異常。失火によるフェイルセーフでS&Sが強制停止された可能性があります。");
+            document.getElementById('dtc-loading-area').classList.add('hidden'); document.getElementById('dtc-clear-btn').classList.remove('hidden'); document.getElementById('dtc-run-btn').classList.remove('hidden'); document.getElementById('dtc-ai-btn').classList.remove('hidden');
+            return;
+        }
+
+        State.isDTCScanning = true; isWaitingForResponse = false; clearTimeout(OBD.timeoutTimer);
+
+        try {
+            this.logInfo("ECU診断通信を初期化中..."); await delay(500); this.logInfo("車台番号(VIN)を要求中 (Mode 09 02)...");
+            let vinRes = await this.sendCommandAndWait("0902\r", 4000); let extractedVin = this.parseVIN(vinRes);
+            if(extractedVin && extractedVin.length > 5) { document.getElementById('dtc-vin-code').textContent = extractedVin; currentDiagnosticReport.vin = extractedVin; this.logInfo(`VIN取得成功: ${extractedVin}`, "success"); } else { this.logInfo("VIN取得スキップ", "error"); }
+            await delay(500);
+
+            this.logInfo("確定トラブルコードを要求中 (Mode 03)..."); let dtcRes03 = await this.sendCommandAndWait("03\r", 4000); let dtcs03 = this.parseDTCs(dtcRes03); await delay(200);
+            this.logInfo("未確定(Pending)コードを要求中 (Mode 07)..."); let dtcRes07 = await this.sendCommandAndWait("07\r", 4000); let dtcs07 = this.parseDTCs(dtcRes07); await delay(200);
+            this.logInfo("恒久的(Permanent)コードを要求中 (Mode 0A)..."); let dtcRes0A = await this.sendCommandAndWait("0A\r", 4000); let dtcs0A = this.parseDTCs(dtcRes0A);
+            document.getElementById('dtc-loading-area').classList.add('hidden');
+            
+            let dtcs = [...new Set([...dtcs03, ...dtcs07, ...dtcs0A])];
+            
+            if (dtcs.length > 0) {
+                this.logInfo(`DTCを ${dtcs.length} 件検出しました！`, "error");
+                dtcs.forEach(code => { let info = this.getFaultInfo(code); this.displayResult(code, info.name, info.desc); currentDiagnosticReport.faultCode = code; currentDiagnosticReport.faultName = info.name; currentDiagnosticReport.faultInfo = info.desc; });
+                Utils.playBeep(320, 0.4);
+            } else {
+                this.logInfo("システム正常 (No DTC Found)", "success"); this.displayNormalResult(); currentDiagnosticReport.faultCode = "";
+            }
+        } catch(e) { document.getElementById('dtc-loading-area').classList.add('hidden'); this.logInfo("診断中にエラー発生: " + e.message, "error"); } finally {
+            document.getElementById('dtc-clear-btn').classList.remove('hidden'); document.getElementById('dtc-run-btn').classList.remove('hidden'); document.getElementById('dtc-ai-btn').classList.remove('hidden'); document.getElementById('dtc-run-btn').textContent = "RE-SCAN";
+            State.isDTCScanning = false; OBD.pollNext();
+        }
+    },
+    sendCommandAndWait: function(cmd, timeoutMs) {
+        return new Promise((resolve, reject) => {
+            OBD.rxBuffer = ""; OBD.sendCmd(cmd);
+            let checkInterval = setInterval(() => {
+                if (OBD.rxBuffer.includes('>') || OBD.rxBuffer.includes('\r')) {
+                    clearInterval(checkInterval); clearTimeout(timeoutTimer);
+                    let res = OBD.rxBuffer; OBD.rxBuffer = ""; resolve(res);
+                }
+            }, 50);
+            let timeoutTimer = setTimeout(() => { clearInterval(checkInterval); reject(new Error("Timeout")); }, timeoutMs);
+        });
+    },
+    clearFaults: async function() {
+        if (State.isSimulation || !txCharacteristic) return;
+        State.isDTCScanning = true; clearTimeout(OBD.timeoutTimer); document.getElementById('dtc-clear-btn').classList.add('hidden'); document.getElementById('dtc-ai-btn').classList.add('hidden'); this.logInfo("ECUフォルト消去要求送信中 (Mode 04)...");
+        try { await this.sendCommandAndWait("04\r", 3000); document.getElementById('dtc-status-log').innerHTML = "<div class='text-green-500 font-bold'>▶ ECUフォルト消去（Mode 04）成功。</div>"; document.getElementById('dtc-vin-code').textContent = "---"; Utils.playBeep(1000, 0.15); } catch(e) { this.logInfo("消去失敗: " + e.message, "error"); } finally { State.isDTCScanning = false; OBD.pollNext(); }
+    },
+    askAI: async function() {
         const apiKey = localStorage.getItem('gemini_api_key');
         if (!apiKey) { alert("最初に右上の歯車アイコンから、Gemini API Keyを設定してください！"); return; }
         const aiBtn = document.getElementById('dtc-ai-btn'); const aiResponseArea = document.getElementById('ai-response-area'); const aiResponseText = document.getElementById('ai-response-text');
@@ -369,7 +910,7 @@
 
         const prompt = `あなたはアルファロメオ・ジュリエッタ（1.4L マルチエア）を熟知したマスターメカニックです。
 以下のOBD2データからトラブルの原因と点検項目を簡潔に回答してください。（Markdownのみ使用可）
-[現在の最大値] 回転数:${peaks.rpm||data.rpm}RPM / 水温:${peaks.coolant}℃ / ブースト:${peaks.dynamic.toFixed(2)}Bar
+[現在の最大値] 回転数:${Peaks.rpm||CarData.rpm}RPM / 水温:${Peaks.coolant}℃ / ブースト:${Peaks.dynamic.toFixed(2)}Bar
 [エラーコード] ${currentDiagnosticReport.faultCode ? `${currentDiagnosticReport.faultCode}: ${currentDiagnosticReport.faultName}` : "エラーなし"}`;
 
         try {
@@ -377,563 +918,13 @@
             if (!response.ok) throw new Error("API通信エラー");
             const result = await response.json(); aiResponseText.innerHTML = result.candidates[0].content.parts[0].text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         } catch (error) { aiResponseText.innerHTML = `<span class="text-red-500">エラー: ${error.message}</span>`; } finally { aiBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> ASK AI'; aiBtn.disabled = false; }
-    }
-
-    function showTextDataModal(title, content) {
-        const container = document.createElement('div');
-        container.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.95);z-index:9999;display:flex;flex-direction:column;padding:max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)) 20px;box-sizing:border-box;';
-        container.innerHTML = `<div style="display:flex;justify-content:space-between;margin-bottom:10px;align-items:center;"><h3 style="color:white;margin:0;font-family:monospace;font-size:12px;">${title}</h3><div style="display:flex;gap:10px;"><button id="modal-copy-close-btn" style="padding:8px 12px;background:#10b981;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;"><i class="fa-solid fa-copy"></i> COPY & CLOSE</button><button id="modal-close-btn" style="padding:8px 12px;background:#D1121C;color:white;border:none;border-radius:4px;font-weight:bold;font-size:12px;">✖</button></div></div><textarea id="modal-textarea" readonly style="flex:1;width:100%;background:#111;color:#0f0;font-family:monospace;font-size:10px;padding:10px;border:1px solid #333;border-radius:4px;white-space:pre;overflow:scroll;">${content}</textarea><div style="color:gray;font-size:10px;text-align:center;margin-top:10px;">※「COPY & CLOSE」を押し、iOSの「メモ」アプリ等にペーストして保存してください。</div>`;
-        document.body.appendChild(container);
-        document.getElementById('modal-copy-close-btn').onclick = () => { const textarea = document.getElementById('modal-textarea'); textarea.select(); textarea.setSelectionRange(0, 999999); try { document.execCommand('copy'); document.body.removeChild(container); logConsole("コピー完了", "system"); } catch (e) { alert('コピー失敗'); } };
-        document.getElementById('modal-close-btn').onclick = () => { document.body.removeChild(container); };
-    }
-
-    let debugFullLogs = []; let telemetryData = []; let csvLogTimer = null;
-    function startCSVLogging() {
-        telemetryData = ["Timestamp,RPM,Speed_kmh,Coolant_C,Intake_C,Baro_kPa,MAP_kPa,Boost_bar,Throttle_%,Pedal_%,Timing_deg,HP_PS,Torque_Nm,GLat,GLong"];
-        if (csvLogTimer) clearInterval(csvLogTimer);
-        csvLogTimer = setInterval(() => {
-            if (!isSimulation && !isDTCScanning) {
-                const ts = new Date().toISOString();
-                const row = `${ts},${Math.round(data.rpm)},${Math.round(data.speed)},${Math.round(data.coolant)},${Math.round(data.intake)},${data.baro},${data.map},${data.boost.toFixed(2)},${Math.round(data.throttle)},${Math.round(data.pedal)},${data.timing.toFixed(1)},${Math.round(data.hp)},${Math.round(data.torque)},${filteredG.x.toFixed(3)},${filteredG.y.toFixed(3)}`;
-                telemetryData.push(row);
-            }
-        }, 100);
-    }
-    function stopCSVLogging() { if (csvLogTimer) clearInterval(csvLogTimer); }
-    
-    function exportCSVLog() {
-        if (telemetryData.length <= 1) { logConsole("データなし", "error"); return; }
-        const csvContent = telemetryData.join("\n"); const fileName = `Giulietta_Telemetry_${new Date().getTime()}.csv`;
-        try {
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const file = new File([blob], fileName, { type: 'text/csv' });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({ files: [file], title: 'Telemetry', text: 'Giulietta Log' }).then(() => { playAlertSound(1100, 0.1); }).catch((e) => { showTextDataModal("CSV DATA", csvContent); });
-                return;
-            }
-        } catch (e) { console.error(e); }
-        showTextDataModal("CSV DATA", csvContent); playAlertSound(1100, 0.1);
-    }
-
-    let currentMode = 'natural', isSimulation = true, simTime = 0, simulationInterval = null, isRetroSkin = false, pollTick = 0;
-    const compatibleBrands = ['PORSCHE', 'BMW', 'MERCEDES', 'AUDI', 'VW', 'TOYOTA', 'NISSAN', 'HONDA', 'SUBARU', 'MAZDA', 'MCLAREN', 'FERRARI', 'ASTON MARTIN'];
-    function initStaffRoll() {
-        const html = compatibleBrands.map(b => `<span class="text-[9px] font-bold font-mono tracking-widest text-gray-400 text-center">${b}</span>`).join('');
-        const content1 = document.getElementById('staff-roll-content-1'); const content2 = document.getElementById('staff-roll-content-2');
-        if (content1) content1.innerHTML = html; if (content2) content2.innerHTML = html;
-    }
-
-    let data = { rpm: 800, speed: 0, coolant: 85, intake: 24, boost: 0.0, map: 100, baro: 100, throttle: 0, pedal: 0, timing: 0, hp: 0, torque: 0 };
-    
-    // ★ メーター類は物理スプリング・ダンパモデル
-    let phys = {
-        rpm: { val: 800, vel: 0 },
-        speed: { val: 0, vel: 0 },
-        boost: { val: 0, vel: 0 },
-        hp: { val: 0, vel: 0 },
-        torque: { val: 0, vel: 0 },
-        coolant: { val: 85, vel: 0 },
-        intake: { val: 24, vel: 0 }
-    };
-    
-    // ★ Gセンサーは専用のLerp(線形補間)座標
-    let animG = { x: 0, y: 0 };
-    
-    let peaks = { rpm: 0, speed: 0, coolant: 0, dynamic: 0.0, hp: 0, torque: 0 };
-
-    let bluetoothDevice = null, txCharacteristic = null, rxCharacteristic = null;
-    let isWaitingForResponse = false, responseTimeoutTimer = null, rxBuffer = "", isDTCScanning = false; 
-    let isMultiplexSupported = true; 
-
-    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-    const colors = { alfaRed: '#D1121C', coolBlue: '#3B82F6', grayNatural: '#9CA3AF', garageRed: '#de000a' };
-    const TARGET_SERVICE_UUIDS = ['0000fff0-0000-1000-8000-00805f9b34fb', '0000ffe0-0000-1000-8000-00805f9b34fb'];
-    
-    let gHistory = []; const MAX_G_HISTORY = 12; 
-    let peakG = 0, peakG_coords = { x: 0, y: 0 }, rawAcc = { x: 0, y: 0, z: 0 }, gOffset = { x: 0, y: 0 }, gCalibrating = false;
-    let currentG = { x: 0, y: 0 }; let filteredG = { x: 0, y: 0 }; const LPF_ALPHA = 0.20; 
-
-    const rpmText = document.getElementById('rpm-value'), speedText = document.getElementById('speed-value'), coolantText = document.getElementById('coolant-value'), dynamicValue = document.getElementById('dynamic-card-value'), gaugeArc = document.getElementById('gauge-arc'), dialGlow = document.getElementById('dial-glow'), shiftIndicator = document.getElementById('shift-indicator'), dnaLabel = document.getElementById('dna-status-label'), connectionStatusText = document.getElementById('connection-status'), statusIndicator = document.getElementById('status-indicator'), consolePanel = document.getElementById('console-logs-container'), dynamicTitle = document.getElementById('dynamic-card-title'), dynamicIcon = document.getElementById('dynamic-card-icon');
-
-    function logConsole(message, type = 'system') {
-        const time = new Date().toLocaleTimeString('ja-JP', { hour12: false }) + '.' + String(Math.floor(Math.random() * 99)).padStart(2, '0');
-        let colorClass = 'text-cyan-400'; if (type === 'tx') colorClass = 'text-green-400'; if (type === 'rx') colorClass = 'text-cyan-300 font-bold'; if (type === 'error') colorClass = 'text-red-500 font-extrabold'; if (type === 'system') colorClass = 'text-gray-500 opacity-80';
-        debugFullLogs.push(`[${new Date().toISOString()}] [${type.toUpperCase()}] ${message}`);
-        if (consolePanel) {
-            const logElement = document.createElement('div'); logElement.className = `${colorClass} flex justify-between gap-2`; logElement.innerHTML = `<span>${time} | ${message}</span>`;
-            consolePanel.insertBefore(logElement, consolePanel.firstChild); if (consolePanel.children.length > 30) consolePanel.removeChild(consolePanel.lastChild);
-        }
-    }
-    function clearConsoleLog() { if (consolePanel) consolePanel.innerHTML = '<div class="text-green-500 opacity-60">Log cleared.</div>'; }
-
-    window.onload = function() { 
-        setTimeout(() => window.scrollTo(0, 1), 500); initStaffRoll(); isRetroSkin = false; toggleRetroSkin(); setDNAMode('natural'); initGForceCanvas(); startSimulation(); 
-        requestAnimationFrame(renderLoop); logConsole("App Standby. ENGINE v33.1 (RESTORED PHYSICS)", "system"); 
-    };
-
-    let gCanvas = null, gCtx = null, lastDrawTime = 0;
-    function initGForceCanvas() { gCanvas = document.getElementById('g-canvas'); if (gCanvas) { gCtx = gCanvas.getContext('2d'); } }
-
-    // Gセンサーの描画処理を物理エンジンで計算された座標を使用して行う
-    function drawGForceRadar() {
-        if (!gCtx || !gCanvas) return;
-        const w = gCanvas.width, h = gCanvas.height, cx = w / 2, cy = h / 2, scale = cx / 0.8;
-        gCtx.clearRect(0, 0, w, h); gCtx.strokeStyle = 'rgba(255,255,255,0.06)'; gCtx.lineWidth = 2; 
-        gCtx.beginPath(); gCtx.arc(cx, cy, 0.5 * scale, 0, 2 * Math.PI); gCtx.stroke(); gCtx.beginPath(); gCtx.arc(cx, cy, 1.0 * scale, 0, 2 * Math.PI); gCtx.stroke();
-        gCtx.beginPath(); gCtx.moveTo(0, cy); gCtx.lineTo(w, cy); gCtx.moveTo(cx, 0); gCtx.lineTo(cx, h); gCtx.stroke();
-        
-        if (gHistory.length > 1) {
-            for (let i = 1; i < gHistory.length; i++) {
-                gCtx.beginPath(); gCtx.moveTo(cx + gHistory[i-1].x * scale, cy - gHistory[i-1].y * scale); gCtx.lineTo(cx + gHistory[i].x * scale, cy - gHistory[i].y * scale);
-                let progress = i / gHistory.length; let opacity = Math.pow(progress, 2) * 0.85;
-                gCtx.strokeStyle = isRetroSkin ? `rgba(209,18,28,${opacity})` : (currentMode === 'dynamic' ? `rgba(209,18,28,${opacity})` : (currentMode === 'allweather' ? `rgba(59,130,246,${opacity})` : `rgba(34,211,238,${opacity})`));
-                gCtx.lineWidth = 1.5 + (progress * 4.0); gCtx.stroke();
-            }
-        }
-        if (peakG > 0.05) {
-            let px = cx + peakG_coords.x * scale, py = cy - peakG_coords.y * scale; px = Math.max(8, Math.min(w-8, px)); py = Math.max(8, Math.min(h-8, py));
-            gCtx.stroke(new Path2D(`M ${px-4} ${py-4} L ${px+4} ${py+4} M ${px+4} ${py-4} L ${px-4} ${py+4}`)); gCtx.beginPath(); gCtx.arc(px, py, 4, 0, 2 * Math.PI); gCtx.strokeStyle='rgba(251,191,36,0.7)'; gCtx.lineWidth=2; gCtx.stroke();
-        }
-        
-        // Gセンサー専用のLerp座標で描画
-        let curX = cx + animG.x * scale, curY = cy - animG.y * scale; curX = Math.max(8, Math.min(w-8, curX)); curY = Math.max(8, Math.min(h-8, curY));
-        gCtx.beginPath(); gCtx.arc(curX, curY, 6, 0, 2 * Math.PI); gCtx.fillStyle = isRetroSkin ? colors.alfaRed : (currentMode === 'dynamic' ? colors.alfaRed : (currentMode === 'allweather' ? colors.coolBlue : '#22D3EE')); gCtx.fill();
-    }
-
-    async function calibrateGForce() {
-        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            try { if (await DeviceMotionEvent.requestPermission() === 'granted') window.addEventListener('devicemotion', handleMotion, true); } catch (e) {}
-        } else { window.addEventListener('devicemotion', handleMotion, true); }
-        gCalibrating = true; setTimeout(() => { gOffset.x = rawAcc.x; gOffset.y = rawAcc.y; gCalibrating = false; peakG = 0; peakG_coords = {x:0,y:0}; filteredG = {x:0, y:0}; }, 600);
-        logConsole("G-Sensor Calibrated.", "system"); playAlertSound(1000, 0.2);
-    }
-
-    function handleMotion(event) {
-        if (!event.accelerationIncludingGravity) return;
-        rawAcc.x = (event.accelerationIncludingGravity.y || 0) / 9.8; rawAcc.y = -(event.accelerationIncludingGravity.x || 0) / 9.8;
-        if (!gCalibrating && !isSimulation) {
-            currentG.x = rawAcc.x - gOffset.x; currentG.y = rawAcc.y - gOffset.y;
-            filteredG.x = (currentG.x * LPF_ALPHA) + (filteredG.x * (1.0 - LPF_ALPHA)); filteredG.y = (currentG.y * LPF_ALPHA) + (filteredG.y * (1.0 - LPF_ALPHA));
-            
-            let mag = Math.sqrt(filteredG.x * filteredG.x + filteredG.y * filteredG.y);
-            if (mag > peakG) { peakG = mag; peakG_coords = {x: filteredG.x, y: filteredG.y}; document.getElementById('peak-g-value').textContent = peakG.toFixed(2) + " G"; }
-        }
-    }
-
-    function toggleRetroSkin() {
-        isRetroSkin = !isRetroSkin; document.body.classList.toggle('retro-bg', isRetroSkin);
-        const brandLogo = document.getElementById('brand-logo'); const dnaContainer = document.getElementById('dna-switch-container'); const carouselContainer = document.getElementById('brand-carousel-container');
-        const alfaEmblem = `<svg viewBox="0 0 100 100" class="w-9 h-9 drop-shadow-lg shrink-0"><circle cx="50" cy="50" r="48" fill="#0f172a" stroke="#d97706" stroke-width="2"/><circle cx="50" cy="50" r="40" fill="#f8fafc" stroke="#d97706" stroke-width="1"/><path d="M 50 10 A 40 40 0 0 0 50 90 Z" fill="#f8fafc"/><path d="M 50 10 A 40 40 0 0 1 50 90 Z" fill="#e0f2fe"/><rect x="18" y="44" width="32" height="12" fill="#b91c1c"/><rect x="28" y="18" width="12" height="64" fill="#b91c1c"/><path d="M 65 25 C 80 15, 90 35, 75 45 C 65 55, 85 65, 75 80 C 60 85, 55 65, 65 55 C 75 45, 50 35, 65 25 Z" fill="#15803d"/><path d="M 50 10 L 50 90" stroke="#d97706" stroke-width="1"/></svg>`;
-        
-        if (isRetroSkin) {
-            brandLogo.innerHTML = `${alfaEmblem} <div class="flex flex-col items-start justify-center"><span class="font-serif-brand text-[8px] text-amber-500 leading-none tracking-widest uppercase">Alfa Romeo</span><span class="font-cursive-alfa text-red-600 leading-none mt-0.5">Giulietta</span></div>`;
-            brandLogo.className = "flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity drop-shadow-md"; gaugeArc.style.stroke = colors.alfaRed;
-            dnaContainer.classList.remove('hidden'); dnaContainer.classList.add('flex'); carouselContainer.classList.add('hidden'); carouselContainer.classList.remove('flex');
-        } else {
-            brandLogo.innerHTML = `<span class="text-white"><i class="fa-solid fa-gauge-high"></i></span> GARAGERED`;
-            brandLogo.className = "text-sm md:text-base font-bold font-mono tracking-widest text-garage-red flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity drop-shadow-md"; gaugeArc.style.stroke = colors.garageRed;
-            dnaContainer.classList.add('hidden'); dnaContainer.classList.remove('flex'); carouselContainer.classList.remove('hidden'); carouselContainer.classList.add('flex');
-        }
-        rpmText.className = isRetroSkin ? "text-[42px] font-156-gauge text-[#D1121C] leading-none mt-1" : "text-4xl font-bold font-mono tracking-tight text-white leading-none mt-0.5";
-        document.getElementById('hp-value').className = isRetroSkin ? "text-base font-156-gauge text-amber-500 leading-none" : "text-base font-bold text-white leading-none";
-        document.getElementById('torque-value').className = isRetroSkin ? "text-base font-156-gauge text-orange-500 leading-none" : "text-base font-bold text-white leading-none";
-        setDNAMode(currentMode);
-    }
-
-    function setDNAMode(mode) {
-        currentMode = mode; ['dna-d', 'dna-n', 'dna-a'].forEach(id => document.getElementById(id).className = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-gray-500 hover:text-white transition-all duration-300");
-        const activeBtn = document.getElementById(`dna-${mode.substring(0,1)}`);
-        if (mode === 'dynamic') { 
-            activeBtn.className = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-white bg-[#D1121C] shadow-lg border border-red-500/20"; dnaLabel.textContent = "DNA: Dynamic"; dnaLabel.style.color = colors.alfaRed; dynamicTitle.textContent = "BOOST"; dynamicIcon.className = "fa-solid fa-gauge-simple-high text-amber-500"; if(isRetroSkin) gaugeArc.style.stroke = colors.alfaRed; 
-        } else if (mode === 'natural') { 
-            activeBtn.className = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-white bg-zinc-700/60 border border-white/10"; dnaLabel.textContent = "DNA: Natural"; dnaLabel.style.color = isRetroSkin ? colors.alfaRed : colors.grayNatural; dynamicTitle.textContent = "INTAKE"; dynamicIcon.className = "fa-solid fa-wind text-cyan-400"; if(isRetroSkin) gaugeArc.style.stroke = colors.alfaRed; 
-        } else { 
-            activeBtn.className = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-white bg-blue-600 shadow-lg border border-blue-400/20"; dnaLabel.textContent = "DNA: All Weather"; dnaLabel.style.color = isRetroSkin ? colors.alfaRed : colors.coolBlue; dynamicTitle.textContent = "INTAKE"; dynamicIcon.className = "fa-solid fa-wind text-cyan-400"; if(isRetroSkin) gaugeArc.style.stroke = colors.alfaRed; 
-        }
-        processEngineData(); 
-    }
-
-    let lastWarningTime = 0;
-    function checkWarnings() {
-        const now = Date.now(); let isWarning = false;
-        const coolantCard = document.getElementById('coolant-card'); if (data.coolant >= 95) { coolantCard.classList.add('warning-active'); isWarning = true; } else { coolantCard.classList.remove('warning-active'); }
-        const boostCard = document.getElementById('big-boost-card'); if (data.boost >= 1.4) { boostCard.classList.add('warning-active'); isWarning = true; } else { boostCard.classList.remove('warning-active'); }
-        if (isWarning && now - lastWarningTime > 2000) { playWarningBeeps(); lastWarningTime = now; }
-    }
-
-    function processEngineData() {
-        let currentMap = data.map || 100;
-        if (isSimulation) currentMap = (data.boost > 0) ? (data.boost * 100 + 100) : (30 + (data.rpm/8000)*70);
-        let rpmFactor = 1.0; if (data.rpm < 2500) { rpmFactor = Math.max(0.2, data.rpm / 2500); } else if (data.rpm > 5000) { rpmFactor = Math.max(0.6, 1.0 - ((data.rpm - 5000) / 4000)); }
-        data.torque = currentMap * 1.05 * rpmFactor; data.hp = (data.torque * data.rpm) / 7022.0;
-
-        if (data.rpm > peaks.rpm) peaks.rpm = data.rpm; if (data.speed > peaks.speed) peaks.speed = data.speed; if (data.coolant > peaks.coolant) peaks.coolant = data.coolant;
-        if (currentMode === 'dynamic') { if (data.boost > peaks.dynamic) peaks.dynamic = data.boost; } else { if (data.intake > peaks.dynamic) peaks.dynamic = data.intake; }
-        if (data.hp > peaks.hp) peaks.hp = data.hp; if (data.torque > peaks.torque) peaks.torque = data.torque;
-
-        document.getElementById('peak-speed').textContent = Math.round(peaks.speed); document.getElementById('peak-coolant').textContent = Math.round(peaks.coolant);
-        document.getElementById('peak-dynamic').textContent = currentMode === 'dynamic' ? peaks.dynamic.toFixed(2) : Math.round(peaks.dynamic);
-        document.getElementById('peak-hp').textContent = Math.round(peaks.hp); document.getElementById('peak-torque').textContent = Math.round(peaks.torque);
-
-        const flashOverlay = document.getElementById('flash-overlay');
-        if (data.rpm > 6000) { dialGlow.classList.add('redline-glow'); rpmText.classList.add('text-[#D1121C]'); if (currentMode === 'dynamic') shiftIndicator.classList.remove('hidden'); if (flashOverlay) flashOverlay.classList.add('shift-flash-active'); } 
-        else { dialGlow.classList.remove('redline-glow'); if (!isRetroSkin) rpmText.classList.remove('text-[#D1121C]'); shiftIndicator.classList.add('hidden'); if (flashOverlay) flashOverlay.classList.remove('shift-flash-active'); }
-        checkWarnings();
-    }
-
-    // ★ 60fps ゲームループ (V33.1の物理スプリングモデル)
-    function renderLoop() {
-        const updatePhysics = (key, target, stiffness, damping) => {
-            let force = (target - phys[key].val) * stiffness;
-            phys[key].vel = (phys[key].vel + force) * damping;
-            phys[key].val += phys[key].vel;
-            
-            // ピタッと止めるためのスナップ処理
-            if (Math.abs(phys[key].vel) < 0.01 && Math.abs(target - phys[key].val) < 0.1) {
-                phys[key].vel = 0; phys[key].val = target;
-            }
-        };
-
-        // バネの硬さ(stiffness)と減衰(damping)を最適化し、レスポンスの鋭さと滑らかさを両立
-        updatePhysics('rpm', data.rpm, 0.08, 0.80);
-        updatePhysics('boost', data.boost, 0.10, 0.75);
-        updatePhysics('speed', data.speed, 0.04, 0.85);
-        updatePhysics('hp', data.hp, 0.06, 0.80);
-        updatePhysics('torque', data.torque, 0.06, 0.80);
-        updatePhysics('coolant', data.coolant, 0.02, 0.90);
-        updatePhysics('intake', data.intake, 0.02, 0.90);
-
-        // ★ Gセンサーはバネ(物理)特有のプルプルを防ぐため、シンプルなLerpを使用
-        let targetGX = isSimulation ? currentG.x : filteredG.x;
-        let targetGY = isSimulation ? currentG.y : filteredG.y;
-        animG.x += (targetGX - animG.x) * 0.2;
-        animG.y += (targetGY - animG.y) * 0.2;
-
-        // DOMの更新
-        rpmText.textContent = Math.round(phys.rpm.val); 
-        speedText.textContent = Math.round(phys.speed.val); 
-        coolantText.textContent = Math.round(phys.coolant.val);
-        document.getElementById('lat-g-value').textContent = animG.x.toFixed(2) + " G"; 
-        document.getElementById('long-g-value').textContent = animG.y.toFixed(2) + " G";
-        
-        if (currentMode === 'dynamic') { dynamicValue.textContent = phys.boost.val.toFixed(2); } 
-        else { dynamicValue.textContent = Math.round(phys.intake.val); }
-        
-        gaugeArc.style.strokeDashoffset = 534 - (Math.min(phys.rpm.val / 8000, 1.0) * 534);
-
-        const hpBar = document.getElementById('hp-bar'); const torqueBar = document.getElementById('torque-bar');
-        document.getElementById('hp-value').textContent = Math.round(phys.hp.val); 
-        document.getElementById('torque-value').textContent = Math.round(phys.torque.val);
-        
-        if(hpBar) hpBar.style.width = `${Math.min(phys.hp.val / 220 * 100, 100)}%`; 
-        if(torqueBar) torqueBar.style.width = `${Math.min(phys.torque.val / 350 * 100, 100)}%`;
-
-        const bigBoostValue = document.getElementById('big-boost-value'); 
-        const bigBoostBarRect = document.getElementById('big-boost-bar-rect');
-        
-        if (bigBoostValue) bigBoostValue.textContent = phys.boost.val.toFixed(2);
-        if (bigBoostBarRect) {
-            const percentage = Math.min(phys.boost.val / 1.5 * 100, 100); 
-            bigBoostBarRect.style.width = `${percentage}%`;
-            
-            if (phys.boost.val < 1.0) { 
-                bigBoostBarRect.setAttribute('fill', 'url(#boost-grad-normal)'); 
-                bigBoostBarRect.style.filter = "drop-shadow(0 0 6px rgba(255,255,255,0.6))"; 
-                bigBoostValue.style.color = "#ffffff"; 
-            } 
-            else if (phys.boost.val < 1.3) { 
-                bigBoostBarRect.setAttribute('fill', '#facc15'); 
-                bigBoostBarRect.style.filter = "drop-shadow(0 0 10px rgba(250,204,21,0.8))"; 
-                bigBoostValue.style.color = "#facc15"; 
-            } 
-            else { 
-                bigBoostBarRect.setAttribute('fill', '#dc2626'); 
-                bigBoostBarRect.style.filter = "drop-shadow(0 0 15px rgba(220,38,38,0.9))"; 
-                bigBoostValue.style.color = "#dc2626"; 
-            }
-        }
-
-        // Gセンサーの描画と軌跡の更新
-        const now = performance.now();
-        if (now - lastDrawTime > 60) {
-            gHistory.push({ x: animG.x, y: animG.y }); 
-            if (gHistory.length > MAX_G_HISTORY) gHistory.shift(); 
-            lastDrawTime = now;
-        }
-        drawGForceRadar();
-
-        requestAnimationFrame(renderLoop);
-    }
-
-    function startSimulation() {
-        isSimulation = true; simTime = 0; document.getElementById('connect-text').textContent = "Connect Car"; document.getElementById('connect-icon').className = "fa-solid fa-bluetooth";
-        statusIndicator.className = "w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"; connectionStatusText.textContent = "Demo Mode";
-        if (simulationInterval) clearInterval(simulationInterval);
-        
-        simulationInterval = setInterval(() => {
-            simTime += 0.2; 
-            data.rpm = 3800 + Math.sin(simTime) * 3000; 
-            data.speed = 40 + Math.sin(simTime) * 20; 
-            data.boost = Math.max(0, Math.sin(simTime) * 1.6); 
-            data.coolant = 85 + Math.sin(simTime * 0.2) * 15; 
-            data.baro = 101; 
-            data.pedal = (data.rpm > 1500) ? Math.min(100, 50 + Math.sin(simTime)*60) : 0; 
-            data.throttle = (data.boost > 1.2) ? 20 : data.pedal; 
-            data.timing = 15 + Math.sin(simTime)*5;
-            
-            currentG.x = Math.sin(simTime * 1.5) * 0.45; 
-            currentG.y = (data.speed / 100) * 0.35 + (Math.sin(simTime * 0.8) > 0 ? 0.3 : -0.2); 
-            
-            let mag = Math.sqrt(currentG.x * currentG.x + currentG.y * currentG.y);
-            if (mag > peakG) { peakG = mag; peakG_coords = {x: currentG.x, y: currentG.y}; document.getElementById('peak-g-value').textContent = peakG.toFixed(2) + " G"; }
-            
-            processEngineData();
-        }, 150); 
-    }
-    function stopSimulation() { if (simulationInterval) clearInterval(simulationInterval); }
-
-    function triggerBluetoothConnection() { if (isSimulation) requestBluetoothDevice(); else disconnectBluetooth(); }
-
-    async function requestBluetoothDevice() {
-        logConsole("Scanning for OBD-II...", "system");
-        try {
-            bluetoothDevice = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: TARGET_SERVICE_UUIDS });
-            bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
-            const server = await bluetoothDevice.gatt.connect();
-            
-            let targetService = null; txCharacteristic = null; rxCharacteristic = null;
-            const services = await server.getPrimaryServices();
-            for (const service of services) {
-                const characteristics = await service.getCharacteristics();
-                for (const char of characteristics) {
-                    if (char.properties.notify || char.properties.indicate) rxCharacteristic = char;
-                    if (char.properties.write || char.properties.writeWithoutResponse) txCharacteristic = char;
-                }
-                if (txCharacteristic && rxCharacteristic) { targetService = service; break; }
-            }
-
-            if (!txCharacteristic || !rxCharacteristic) throw new Error("TX/RX ports not found.");
-
-            await rxCharacteristic.startNotifications();
-            rxCharacteristic.addEventListener('characteristicvaluechanged', handleCharacteristicValueChanged);
-
-            logConsole("Connected. Init ELM327...", "system");
-            await sendELMCommand("ATZ\r"); await delay(800); 
-            await sendELMCommand("ATE0\r"); await delay(200); 
-            await sendELMCommand("ATH0\r"); await delay(200); 
-            await sendELMCommand("ATS0\r"); await delay(200); 
-            await sendELMCommand("ATCAF1\r"); await delay(200); 
-            await sendELMCommand("ATAL\r"); await delay(200); 
-            await sendELMCommand("ATAT1\r"); await delay(200); 
-            await sendELMCommand("ATST10\r"); await delay(200); 
-            await sendELMCommand("ATSP0\r"); await delay(200);
-            
-            isSimulation = false; stopSimulation();
-            document.getElementById('connect-text').textContent = "Disconnect"; document.getElementById('connect-icon').className = "fa-solid fa-circle-xmark";
-            statusIndicator.className = "w-1.5 h-1.5 rounded-full bg-green-500"; connectionStatusText.textContent = "OBD Ready";
-            
-            debugFullLogs = []; isWaitingForResponse = false; rxBuffer = "";
-            logConsole("Init complete. MULTIPLEX polling started.", "system");
-
-            document.getElementById('g-sensor-modal').classList.remove('hidden');
-
-            startCSVLogging();
-            pollNextOBDCommand();
-        } catch (error) { logConsole("Connect failed: " + error.message, "error"); startSimulation(); }
-    }
-
-    async function sendELMCommand(command) {
-        if (!txCharacteristic) return;
-        try {
-            if (txCharacteristic.properties.writeWithoutResponse) { await txCharacteristic.writeValueWithoutResponse(new TextEncoder().encode(command)); } 
-            else { await txCharacteristic.writeValue(new TextEncoder().encode(command)); }
-        } catch(e) { logConsole("Write fail: " + e.message, "error"); }
-    }
-
-    function pollNextOBDCommand() {
-        if (!txCharacteristic || isSimulation || isDTCScanning || isWaitingForResponse) return;
-
-        isWaitingForResponse = true; pollTick++; let nextCmd = "";
-        
-        if (isMultiplexSupported) {
-            if (pollTick % 5 !== 0) { nextCmd = "010C0B0D11490E"; } else { nextCmd = "01050F33"; }
-        } else {
-            if (pollTick % 2 === 0) { nextCmd = "010C0B0D"; } else { nextCmd = "0111490E"; }
-        }
-        
-        sendELMCommand(nextCmd + "\r");
-
-        responseTimeoutTimer = setTimeout(() => {
-            logConsole(`Timeout! Recovery sequence started.`, "error");
-            sendELMCommand("\r");
-            setTimeout(() => { isWaitingForResponse = false; rxBuffer = ""; pollNextOBDCommand(); }, 1000);
-        }, 1500); 
-    }
-
-    function handleCharacteristicValueChanged(event) {
-        const text = new TextDecoder().decode(event.target.value);
-        rxBuffer += text;
-
-        if (rxBuffer.includes('>')) {
-            const cleanResponse = rxBuffer.replace(/[\r\n>]/g, '').trim();
-            
-            if (cleanResponse.length > 0) {
-                if (cleanResponse.includes("?")) {
-                    if (isMultiplexSupported) {
-                        isMultiplexSupported = false; 
-                        logConsole("ECU rejected Full-Burst. Falling back to Safe Mode.", "error");
-                    }
-                } else if(!cleanResponse.includes("NODATA") && !cleanResponse.includes("ERROR")) {
-                    if (!isDTCScanning) parseOBDResponse(cleanResponse);
-                }
-            }
-            
-            if (!isDTCScanning) {
-                rxBuffer = ""; 
-                if (isWaitingForResponse) {
-                    clearTimeout(responseTimeoutTimer);
-                    isWaitingForResponse = false;
-                    setTimeout(pollNextOBDCommand, 0); 
-                }
-            }
-        }
-    }
-
-    function parseOBDResponse(response) {
-        const clean = response.replace(/\s+/g, ''); if (!clean.startsWith("41")) return;
-        
-        let isDataUpdated = false;
-        let pIndex = clean.indexOf('41');
-        
-        if (pIndex !== -1) {
-            let ptr = pIndex + 2;
-            while (ptr < clean.length) {
-                let pid = clean.substring(ptr, ptr + 2);
-                ptr += 2;
-                
-                let dataLength = 0; 
-                if (["0C"].includes(pid)) dataLength = 4;
-                else if (["0D", "05", "0F", "33", "11", "49", "0E", "0B"].includes(pid)) dataLength = 2;
-                else {
-                    let next41 = clean.indexOf('41', ptr);
-                    if (next41 !== -1) { ptr = next41 + 2; continue; } else { break; }
-                }
-
-                if (ptr + dataLength > clean.length) break;
-
-                let dataBytes = clean.substring(ptr, ptr + dataLength);
-                ptr += dataLength;
-
-                if (pid === "0C") { data.rpm = (256 * parseInt(dataBytes.substring(0, 2), 16) + parseInt(dataBytes.substring(2, 4), 16)) / 4; isDataUpdated = true; }
-                else if (pid === "0D") { data.speed = parseInt(dataBytes, 16); isDataUpdated = true; }
-                else if (pid === "05") { data.coolant = parseInt(dataBytes, 16) - 40; isDataUpdated = true; }
-                else if (pid === "0F") { data.intake = parseInt(dataBytes, 16) - 40; isDataUpdated = true; }
-                else if (pid === "33") { data.baro = parseInt(dataBytes, 16); isDataUpdated = true; }
-                else if (pid === "11") { data.throttle = parseInt(dataBytes, 16) * 100 / 255; isDataUpdated = true; }
-                else if (pid === "49") { data.pedal = parseInt(dataBytes, 16) * 100 / 255; isDataUpdated = true; }
-                else if (pid === "0E") { data.timing = (parseInt(dataBytes, 16) / 2) - 64; isDataUpdated = true; }
-                else if (pid === "0B") { 
-                    let mapKpa = parseInt(dataBytes, 16); data.map = mapKpa; 
-                    data.boost = Math.max(0, (mapKpa - data.baro) / 100.0); 
-                    isDataUpdated = true;
-                }
-            }
-        }
-        if (isDataUpdated) { processEngineData(); }
-    }
-
-    function disconnectBluetooth() {
-        isWaitingForResponse = false; clearTimeout(responseTimeoutTimer);
-        if (bluetoothDevice && bluetoothDevice.gatt.connected) { try { bluetoothDevice.gatt.disconnect(); } catch(e){} }
-        logConsole("Disconnected by User.", "system"); stopCSVLogging(); startSimulation();
-    }
-    
-    function onDisconnected() {
-        isWaitingForResponse = false; clearTimeout(responseTimeoutTimer);
-        logConsole("Device Connection Lost.", "error"); stopCSVLogging(); startSimulation();
-    }
-
-    let currentDiagnosticReport = { timestamp: "", vin: "---", processLogs: [], faultCode: "", faultName: "", faultInfo: "" };
-    function triggerDTCScan() { document.getElementById('dtc-modal').classList.remove('hidden'); }
-    function closeDTCScan() { document.getElementById('dtc-modal').classList.add('hidden'); document.getElementById('ai-response-area').classList.add('hidden'); }
-
-    function logToDTC(msg, type="info") {
-        const item = document.createElement('div');
-        item.className = type === "error" ? "text-red-400 font-bold" : (type === "success" ? "text-green-400" : "text-cyan-400");
-        item.innerHTML = `<span>▶ ${msg}</span>`;
-        const logArea = document.getElementById('dtc-status-log');
-        logArea.appendChild(item); logArea.parentElement.scrollTop = logArea.parentElement.scrollHeight;
-        currentDiagnosticReport.processLogs.push(`[${new Date().toLocaleTimeString('ja-JP')}] ${msg}`);
-        logConsole(`[DTC] ${msg}`, type === "error" ? "error" : "system");
-    }
-
-    async function sendCommandAndWait(cmd, timeoutMs = 4000) {
-        return new Promise((resolve, reject) => {
-            rxBuffer = ""; sendELMCommand(cmd);
-            let checkInterval = setInterval(() => {
-                if (rxBuffer.includes('>') || rxBuffer.includes('\r')) {
-                    clearInterval(checkInterval); clearTimeout(timeoutTimer);
-                    let res = rxBuffer; rxBuffer = ""; resolve(res);
-                }
-            }, 50);
-            let timeoutTimer = setTimeout(() => { clearInterval(checkInterval); reject(new Error("Timeout (ECUが無応答)")); }, timeoutMs);
-        });
-    }
-
-    async function startDTCScanProcess() {
-        document.getElementById('dtc-run-btn').classList.add('hidden'); document.getElementById('dtc-clear-btn').classList.add('hidden'); document.getElementById('dtc-ai-btn').classList.add('hidden'); document.getElementById('dtc-loading-area').classList.remove('hidden'); document.getElementById('dtc-status-log').innerHTML = ""; document.getElementById('ai-response-area').classList.add('hidden'); 
-        currentDiagnosticReport.timestamp = new Date().toLocaleString('ja-JP'); currentDiagnosticReport.processLogs = [];
-        
-        if (isSimulation || !txCharacteristic) {
-            logToDTC("※未接続のためデモ診断を開始します"); await delay(1000); logToDTC("車台番号(VIN)を取得中..."); await delay(1000);
-            document.getElementById('dtc-vin-code').textContent = "ZAR940000DEMO"; logToDTC("ECUトラブルメモリを走査中..."); await delay(1000);
-            displayDTCResult("P0300", "Random/Multiple Cylinder Misfire Detected", "複数シリンダーでの失火を検出。ダイナミックモードの高負荷時に発生しやすい症状です。");
-            displayDTCResult("U1701", "CAN Network S&S Control Unit", "アイドリングストップ(S&S)制御ユニットとの通信異常。失火によるフェイルセーフでS&Sが強制停止された可能性があります。");
-            document.getElementById('dtc-loading-area').classList.add('hidden'); document.getElementById('dtc-clear-btn').classList.remove('hidden'); document.getElementById('dtc-run-btn').classList.remove('hidden'); document.getElementById('dtc-ai-btn').classList.remove('hidden');
-            return;
-        }
-
-        isDTCScanning = true; isWaitingForResponse = false; clearTimeout(responseTimeoutTimer);
-
-        try {
-            logToDTC("ECU診断通信を初期化中..."); await delay(500); logToDTC("車台番号(VIN)を要求中 (Mode 09 02)...");
-            let vinRes = await sendCommandAndWait("0902\r", 4000); let extractedVin = parseVIN(vinRes);
-            if(extractedVin && extractedVin.length > 5) { document.getElementById('dtc-vin-code').textContent = extractedVin; currentDiagnosticReport.vin = extractedVin; logToDTC(`VIN取得成功: ${extractedVin}`, "success"); } else { logToDTC("VIN取得スキップ (ECU非対応または暗号化)", "error"); }
-            await delay(500);
-
-            logToDTC("確定トラブルコードを要求中 (Mode 03)..."); let dtcRes03 = await sendCommandAndWait("03\r", 4000); let dtcs03 = parseDTCs(dtcRes03); await delay(200);
-            logToDTC("未確定(Pending)コードを要求中 (Mode 07)..."); let dtcRes07 = await sendCommandAndWait("07\r", 4000); let dtcs07 = parseDTCs(dtcRes07); await delay(200);
-            logToDTC("恒久的(Permanent)コードを要求中 (Mode 0A)..."); let dtcRes0A = await sendCommandAndWait("0A\r", 4000); let dtcs0A = parseDTCs(dtcRes0A);
-            document.getElementById('dtc-loading-area').classList.add('hidden');
-            
-            let dtcs = [...new Set([...dtcs03, ...dtcs07, ...dtcs0A])];
-            
-            if (dtcs.length > 0) {
-                logToDTC(`DTCを ${dtcs.length} 件検出しました！`, "error");
-                dtcs.forEach(code => { let info = getFaultInfo(code); displayDTCResult(code, info.name, info.desc); currentDiagnosticReport.faultCode = code; currentDiagnosticReport.faultName = info.name; currentDiagnosticReport.faultInfo = info.desc; });
-                playAlertSound(320, 0.4);
-            } else {
-                logToDTC("システム正常 (No DTC Found)", "success"); displayNormalResult(); currentDiagnosticReport.faultCode = "";
-            }
-        } catch(e) { document.getElementById('dtc-loading-area').classList.add('hidden'); logToDTC("診断中にエラー発生: " + e.message, "error"); } finally {
-            document.getElementById('dtc-clear-btn').classList.remove('hidden'); document.getElementById('dtc-run-btn').classList.remove('hidden'); document.getElementById('dtc-ai-btn').classList.remove('hidden'); document.getElementById('dtc-run-btn').textContent = "RE-SCAN";
-            isDTCScanning = false; pollNextOBDCommand();
-        }
-    }
-
-    async function clearDTCFaults() {
-        if (isSimulation || !txCharacteristic) return;
-        isDTCScanning = true; clearTimeout(responseTimeoutTimer); document.getElementById('dtc-clear-btn').classList.add('hidden'); document.getElementById('dtc-ai-btn').classList.add('hidden'); logToDTC("ECUフォルト消去要求送信中 (Mode 04)...", "info");
-        try { await sendCommandAndWait("04\r", 3000); document.getElementById('dtc-status-log').innerHTML = "<div class='text-green-500 font-bold'>▶ ECUフォルト消去（Mode 04）成功。</div>"; document.getElementById('dtc-vin-code').textContent = "---"; playAlertSound(1000, 0.15); } catch(e) { logToDTC("消去失敗: " + e.message, "error"); } finally { isDTCScanning = false; pollNextOBDCommand(); }
-    }
-    
-    function parseVIN(res) { let str = ""; let cleanHex = res.replace(/[^0-9A-Fa-f]/g, ''); for(let i=0; i<cleanHex.length; i+=2) { let code = parseInt(cleanHex.substr(i, 2), 16); if (code >= 32 && code <= 126) str += String.fromCharCode(code); } let match = str.match(/[A-HJ-NPR-Z0-9]{17}/); return match ? match[0] : (str.length > 5 ? str : null); }
-    function parseDTCs(res) { 
+    },
+    parseVIN: function(res) { let str = ""; let cleanHex = res.replace(/[^0-9A-Fa-f]/g, ''); for(let i=0; i<cleanHex.length; i+=2) { let code = parseInt(cleanHex.substr(i, 2), 16); if (code >= 32 && code <= 126) str += String.fromCharCode(code); } let match = str.match(/[A-HJ-NPR-Z0-9]{17}/); return match ? match[0] : (str.length > 5 ? str : null); },
+    parseDTCs: function(res) { 
         let dtcs = []; let cleanHex = res.replace(/[^0-9A-Fa-f]/g, ''); let idx = cleanHex.indexOf('43'); if (idx === -1) idx = cleanHex.indexOf('47'); if (idx === -1) idx = cleanHex.indexOf('4A');
         if (idx !== -1) { let data = cleanHex.substring(idx + 2); for (let i = 0; i < data.length; i += 4) { if (i + 4 <= data.length) { let codeHex = data.substring(i, i + 4); if (codeHex !== '0000' && /^[0-9A-Fa-f]{4}$/.test(codeHex)) { let val = parseInt(codeHex, 16); let typeChar = ['P', 'C', 'B', 'U'][(val >> 14) & 0x03]; let dtcStr = `${typeChar}${(val >> 12) & 0x03}${((val >> 8) & 0x0F).toString(16)}${((val >> 4) & 0x0F).toString(16)}${(val & 0x0F).toString(16)}`.toUpperCase(); if(dtcStr !== 'P0000') dtcs.push(dtcStr); } } } } return [...new Set(dtcs)]; 
-    }
-    
-    function getFaultInfo(code) { 
+    },
+    getFaultInfo: function(code) { 
         const dict = { 
             "P0300": { name: "Random Misfire Detected", desc: "複数気筒でのランダムな失火を検出。ダイナミックモードのフルブースト時など、高負荷時に発生しやすい症状です。イグニッションコイルやプラグの劣化が疑われます。" },
             "P0301": { name: "Cylinder 1 Misfire Detected", desc: "1番シリンダーで失火を検出。コイル、プラグ、またはマルチエアユニット1番の油圧不良の可能性があります。" },
@@ -952,11 +943,65 @@
             "P1850": { name: "Transmission Gear Sensor", desc: "TCTギアポジションセンサーのエラーです。" } 
         }; 
         return dict[code] || { name: "Unknown Fault Code", desc: "アルファロメオ専用の診断機で詳細を確認してください。" }; 
+    },
+    displayResult: function(code, name, info) { const result = document.createElement('div'); result.className = "mt-2 p-2 bg-red-950/30 rounded border border-red-500/20"; result.innerHTML = `<div class="text-red-500 font-extrabold flex justify-between"><span>❌ 異常検出 [${code}]</span> <span class="animate-pulse text-xs">WARNING</span></div><div class="text-white text-[9px] font-bold mt-1">${name}</div><div class="text-gray-400 text-[8px] mt-1 leading-relaxed border-t border-white/5 pt-1">${info}</div>`; document.getElementById('dtc-status-log').appendChild(result); const logArea = document.getElementById('dtc-status-log').parentElement; logArea.scrollTop = logArea.scrollHeight; },
+    displayNormalResult: function() { const result = document.createElement('div'); result.className = "mt-2 p-2 bg-green-950/30 rounded border border-green-500/20"; result.innerHTML = `<div class="text-green-500 font-extrabold flex justify-between"><span>✅ システム正常</span></div><div class="text-gray-400 text-[8px] mt-1 leading-relaxed border-t border-white/5 pt-1">ECUに記録されているトラブルコードはありません。</div>`; document.getElementById('dtc-status-log').appendChild(result); }
+};
+
+/**
+ * =========================================================
+ * 9. メインアプリケーション (App Root)
+ * =========================================================
+ */
+const App = {
+    toggleSkin: function() {
+        State.isRetroSkin = !State.isRetroSkin; document.body.classList.toggle('retro-bg', State.isRetroSkin);
+        const alfaEmblem = `<svg viewBox="0 0 100 100" class="w-9 h-9 drop-shadow-lg shrink-0"><circle cx="50" cy="50" r="48" fill="#0f172a" stroke="#d97706" stroke-width="2"/><circle cx="50" cy="50" r="40" fill="#f8fafc" stroke="#d97706" stroke-width="1"/><path d="M 50 10 A 40 40 0 0 0 50 90 Z" fill="#f8fafc"/><path d="M 50 10 A 40 40 0 0 1 50 90 Z" fill="#e0f2fe"/><rect x="18" y="44" width="32" height="12" fill="#b91c1c"/><rect x="28" y="18" width="12" height="64" fill="#b91c1c"/><path d="M 65 25 C 80 15, 90 35, 75 45 C 65 55, 85 65, 75 80 C 60 85, 55 65, 65 55 C 75 45, 50 35, 65 25 Z" fill="#15803d"/><path d="M 50 10 L 50 90" stroke="#d97706" stroke-width="1"/></svg>`;
+        
+        if (State.isRetroSkin) {
+            UI.els['brand-logo'].innerHTML = `${alfaEmblem} <div class="flex flex-col items-start justify-center"><span class="font-serif-brand text-[8px] text-amber-500 leading-none tracking-widest uppercase">Alfa Romeo</span><span class="font-cursive-alfa text-red-600 leading-none mt-0.5">Giulietta</span></div>`;
+            UI.els['brand-logo'].className = "flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity drop-shadow-md"; UI.els['gauge-arc'].style.stroke = colors.alfaRed;
+            UI.els['dna-switch-container'].classList.remove('hidden'); UI.els['dna-switch-container'].classList.add('flex'); UI.els['brand-carousel-container'].classList.add('hidden'); UI.els['brand-carousel-container'].classList.remove('flex');
+        } else {
+            UI.els['brand-logo'].innerHTML = `<span class="text-white"><i class="fa-solid fa-gauge-high"></i></span> GARAGERED`;
+            UI.els['brand-logo'].className = "text-sm md:text-base font-bold font-mono tracking-widest text-garage-red flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity drop-shadow-md"; UI.els['gauge-arc'].style.stroke = colors.garageRed;
+            UI.els['dna-switch-container'].classList.add('hidden'); UI.els['dna-switch-container'].classList.remove('flex'); UI.els['brand-carousel-container'].classList.remove('hidden'); UI.els['brand-carousel-container'].classList.add('flex');
+        }
+        UI.els['rpm-value'].className = State.isRetroSkin ? "text-[42px] font-156-gauge text-[#D1121C] leading-none mt-1" : "text-4xl font-bold font-mono tracking-tight text-white leading-none mt-0.5";
+        UI.els['hp-value'].className = State.isRetroSkin ? "text-base font-156-gauge text-amber-500 leading-none" : "text-base font-bold text-white leading-none";
+        UI.els['torque-value'].className = State.isRetroSkin ? "text-base font-156-gauge text-orange-500 leading-none" : "text-base font-bold text-white leading-none";
+        this.setDNA(State.mode);
+    },
+    setDNA: function(mode) {
+        State.mode = mode; ['dna-d', 'dna-n', 'dna-a'].forEach(id => document.getElementById(id).className = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-gray-500 hover:text-white transition-all duration-300");
+        const activeBtn = document.getElementById(`dna-${mode.substring(0,1)}`);
+        if (mode === 'dynamic') { 
+            activeBtn.className = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-white bg-[#D1121C] shadow-lg border border-red-500/20"; UI.els['dna-status-label'].textContent = "DNA: Dynamic"; UI.els['dna-status-label'].style.color = colors.alfaRed; UI.els['dynamic-card-title'].textContent = "BOOST"; UI.els['dynamic-card-icon'].className = "fa-solid fa-gauge-simple-high text-amber-500"; if(State.isRetroSkin) UI.els['gauge-arc'].style.stroke = colors.alfaRed; 
+        } else if (mode === 'natural') { 
+            activeBtn.className = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-white bg-zinc-700/60 border border-white/10"; UI.els['dna-status-label'].textContent = "DNA: Natural"; UI.els['dna-status-label'].style.color = State.isRetroSkin ? colors.alfaRed : colors.grayNatural; UI.els['dynamic-card-title'].textContent = "INTAKE"; UI.els['dynamic-card-icon'].className = "fa-solid fa-wind text-cyan-400"; if(State.isRetroSkin) UI.els['gauge-arc'].style.stroke = colors.alfaRed; 
+        } else { 
+            activeBtn.className = "w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-white bg-blue-600 shadow-lg border border-blue-400/20"; UI.els['dna-status-label'].textContent = "DNA: All Weather"; UI.els['dna-status-label'].style.color = State.isRetroSkin ? colors.alfaRed : colors.coolBlue; UI.els['dynamic-card-title'].textContent = "INTAKE"; UI.els['dynamic-card-icon'].className = "fa-solid fa-wind text-cyan-400"; if(State.isRetroSkin) UI.els['gauge-arc'].style.stroke = colors.alfaRed; 
+        }
+        Calc.processEngineData(); 
+    },
+    boot: function() {
+        UI.init();
+        const html = ['PORSCHE', 'BMW', 'MERCEDES', 'AUDI', 'VW', 'TOYOTA', 'NISSAN', 'HONDA', 'SUBARU', 'MAZDA', 'MCLAREN', 'FERRARI', 'ASTON MARTIN'].map(b => `<span class="text-[9px] font-bold font-mono tracking-widest text-gray-400 text-center">${b}</span>`).join('');
+        if(UI.els['brand-carousel-container']) { document.getElementById('staff-roll-content-1').innerHTML=html; document.getElementById('staff-roll-content-2').innerHTML=html; }
+        
+        this.toggleSkin();
+        this.setDNA('natural');
+        Sim.start();
+        
+        requestAnimationFrame((now) => Engine.loop(now));
+        UI.log("App Boot Sequence Complete. REBORN ENGINE v44", "system");
     }
+};
 
-    function displayDTCResult(code, name, info) { const result = document.createElement('div'); result.className = "mt-2 p-2 bg-red-950/30 rounded border border-red-500/20"; result.innerHTML = `<div class="text-red-500 font-extrabold flex justify-between"><span>❌ 異常検出 [${code}]</span> <span class="animate-pulse text-xs">WARNING</span></div><div class="text-white text-[9px] font-bold mt-1">${name}</div><div class="text-gray-400 text-[8px] mt-1 leading-relaxed border-t border-white/5 pt-1">${info}</div>`; document.getElementById('dtc-status-log').appendChild(result); const logArea = document.getElementById('dtc-status-log').parentElement; logArea.scrollTop = logArea.scrollHeight; }
-    function displayNormalResult() { const result = document.createElement('div'); result.className = "mt-2 p-2 bg-green-950/30 rounded border border-green-500/20"; result.innerHTML = `<div class="text-green-500 font-extrabold flex justify-between"><span>✅ システム正常</span></div><div class="text-gray-400 text-[8px] mt-1 leading-relaxed border-t border-white/5 pt-1">ECUに記録されているトラブルコードはありません。</div>`; document.getElementById('dtc-status-log').appendChild(result); }
+window.onload = function() {
+    setTimeout(() => window.scrollTo(0, 1), 500);
+    App.boot();
+};
 </script>
-
 </body>
 </html>
