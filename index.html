@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0c0a0b" />
+    <title>Giulietta Service — 1.4 Competizione MT</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Oswald:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <section class="view" data-view="home">
+        <p class="eyebrow">Alfa Romeo · Scheduled Care</p>
+        <h1 class="brand">GIULIETTA <span>SERVICE</span></h1>
+        <p class="lede" id="home-vehicle">1.4 Competizione MT</p>
+
+        <div class="panel">
+          <div class="row" style="justify-content: space-between">
+            <div class="metric">
+              <small>現在の走行距離</small>
+              <b id="home-odometer">0 km</b>
+            </div>
+          </div>
+          <form id="odo-form" class="stack" style="margin-top: 0.9rem">
+            <label>
+              走行距離を更新 (km)
+              <input id="odo-input" type="number" min="0" step="1" required />
+            </label>
+            <button class="btn btn-primary" type="submit">距離を保存</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">次に来そうな整備</h2>
+          <ul class="list" id="home-upcoming" style="margin-top: 0.75rem"></ul>
+          <p class="note">間隔は目安です。取扱説明書・整備手帳を正としてください。</p>
+        </div>
+      </section>
+
+      <section class="view" data-view="service" hidden>
+        <p class="eyebrow">Logbook</p>
+        <h1 class="brand">整備記録</h1>
+        <p class="lede">実施したら残す。次の期限が一目で分かります。</p>
+
+        <div class="panel">
+          <h2 class="panel-title">メニュー</h2>
+          <ul class="list" id="service-list" style="margin-top: 0.75rem"></ul>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">記録を追加</h2>
+          <form id="record-form" class="stack" style="margin-top: 0.75rem">
+            <label>
+              項目
+              <select id="rec-item" required></select>
+            </label>
+            <label>
+              日付
+              <input id="rec-date" type="date" required />
+            </label>
+            <label>
+              走行距離 (km)
+              <input id="rec-odo" type="number" min="0" step="1" required />
+            </label>
+            <label>
+              費用（任意）
+              <input id="rec-cost" type="number" min="0" step="1" />
+            </label>
+            <label>
+              メモ
+              <textarea id="rec-note" placeholder="使用オイル規格、店舗名など"></textarea>
+            </label>
+            <button class="btn btn-primary" type="submit">記録する</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">履歴</h2>
+          <ul class="list" id="service-history" style="margin-top: 0.75rem"></ul>
+        </div>
+      </section>
+
+      <section class="view" data-view="obd" hidden>
+        <p class="eyebrow">Diagnostics</p>
+        <h1 class="brand">OBD</h1>
+        <p class="lede">安い BLE ELM327 系アダプタ向け。まずはデモで画面確認も可。</p>
+
+        <div class="panel">
+          <div class="row" style="justify-content: space-between">
+            <span class="panel-title">接続</span>
+            <span id="obd-status" class="pill">未接続</span>
+          </div>
+          <p class="note" id="ble-hint"></p>
+          <div class="row" style="margin-top: 0.75rem">
+            <button id="btn-obd-connect" class="btn btn-primary" type="button">BLE接続</button>
+            <button id="btn-obd-demo" class="btn btn-warn" type="button">デモ</button>
+            <button id="btn-obd-disconnect" class="btn btn-ghost" type="button">切断</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">ライブ</h2>
+          <div class="gauge-grid" style="margin-top: 0.75rem">
+            <div class="gauge"><div class="v" id="g-rpm">—</div><div class="u">RPM</div></div>
+            <div class="gauge"><div class="v" id="g-speed">—</div><div class="u">km/h</div></div>
+            <div class="gauge"><div class="v" id="g-coolant">—</div><div class="u">冷却水 °C</div></div>
+            <div class="gauge"><div class="v" id="g-map">—</div><div class="u">MAP kPa</div></div>
+            <div class="gauge"><div class="v" id="g-throttle">—</div><div class="u">スロットル %</div></div>
+            <div class="gauge"><div class="v" id="g-boost">—</div><div class="u">簡易ブースト bar</div></div>
+          </div>
+          <pre class="log-box" id="obd-log" style="margin-top: 0.75rem"></pre>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">DTC</h2>
+          <div class="row" style="margin-top: 0.75rem">
+            <button id="btn-dtc-read" class="btn btn-primary" type="button">読み取り</button>
+            <button id="btn-dtc-clear" class="btn btn-danger" type="button">消去</button>
+            <button id="btn-ask-ai" class="btn btn-ghost" type="button">AIに聞く</button>
+          </div>
+          <ul class="list" id="dtc-list" style="margin-top: 0.75rem">
+            <li class="list-item"><p>まだ読み取っていません。</p></li>
+          </ul>
+          <pre class="log-box" id="ai-out" style="margin-top: 0.75rem; color: #e8d5cf">AIの回答がここに出ます</pre>
+        </div>
+      </section>
+
+      <section class="view" data-view="settings" hidden>
+        <p class="eyebrow">Vehicle</p>
+        <h1 class="brand">設定</h1>
+        <p class="lede">車両情報と任意の Gemini キー。</p>
+
+        <div class="panel">
+          <form id="settings-form" class="stack">
+            <label>
+              表示名
+              <input id="set-name" type="text" />
+            </label>
+            <label>
+              年式メモ
+              <input id="set-year" type="text" placeholder="例: 2015" />
+            </label>
+            <label>
+              ナンバーメモ
+              <input id="set-plate" type="text" />
+            </label>
+            <label>
+              走行距離 (km)
+              <input id="set-odo" type="number" min="0" step="1" />
+            </label>
+            <label>
+              Gemini API Key（任意）
+              <input id="set-gemini" type="password" autocomplete="off" placeholder="AIに聞く 用" />
+            </label>
+            <button class="btn btn-primary" type="submit">保存</button>
+          </form>
+          <button id="btn-reset" class="btn btn-danger" type="button" style="margin-top: 0.85rem">
+            データを初期化
+          </button>
+          <p class="note">データはこの端末のブラウザ内のみに保存されます。</p>
+        </div>
+      </section>
+    </div>
+
+    <nav class="nav" aria-label="メイン">
+      <button type="button" data-nav="home" class="active">ホーム</button>
+      <button type="button" data-nav="service">整備</button>
+      <button type="button" data-nav="obd">OBD</button>
+      <button type="button" data-nav="settings">設定</button>
+    </nav>
+
+    <div id="toast" class="toast" role="status"></div>
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>
