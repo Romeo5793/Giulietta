@@ -1,5 +1,5 @@
 /** BLE ELM327 アダプタの既知 GATT プロファイル（調査資料 §4.1 準拠） */
-import { decodeVin, parseVinFromObdResponse } from "./vin-decode.js";
+import { decodeVin, parseVinFromObdResponse } from "./vin-decode.js?v=2";
 
 const BLE_PROFILES = [
   {
@@ -40,12 +40,16 @@ const SCAN_FILTERS = [
   { services: ["e7810a71-73ae-499d-8c15-faa9aef0c3f2"] },
 ];
 
-const PIDs = {
+const PID_MAP = {
   rpm: "010C",
   speed: "010D",
   coolant: "0105",
+  intake: "010F",
+  baro: "0133",
   map: "010B",
   throttle: "0111",
+  pedal: "0149",
+  timing: "010E",
 };
 
 function sleep(ms) {
@@ -58,29 +62,61 @@ function decodePid(cmd, hexPayload) {
   if (cmd === "010C" && nums.length >= 2) return Math.round(((nums[0] * 256) + nums[1]) / 4);
   if (cmd === "010D" && nums.length >= 1) return nums[0];
   if (cmd === "0105" && nums.length >= 1) return nums[0] - 40;
+  if (cmd === "010F" && nums.length >= 1) return nums[0] - 40;
+  if (cmd === "0133" && nums.length >= 1) return nums[0];
   if (cmd === "010B" && nums.length >= 1) return nums[0];
   if (cmd === "0111" && nums.length >= 1) return Math.round((nums[0] * 100) / 255);
+  if (cmd === "0149" && nums.length >= 1) return Math.round((nums[0] * 100) / 255);
+  if (cmd === "010E" && nums.length >= 1) return nums[0] / 2 - 64;
   return null;
+}
+
+function enrichTelemetry(telemetry) {
+  const baro = telemetry.baro ?? 100;
+  if (telemetry.map != null) {
+    telemetry.boostBar = Math.max(0, (telemetry.map - baro) / 100);
+  }
+  return telemetry;
 }
 
 function parseMode03(response) {
   const clean = response.replace(/\s+/g, "").toUpperCase();
-  const idx = clean.indexOf("43");
-  if (idx < 0) return [];
-  const data = clean.slice(idx + 2);
-  const codes = [];
-  for (let i = 0; i + 3 < data.length; i += 4) {
-    const A = parseInt(data.slice(i, i + 2), 16);
-    const B = parseInt(data.slice(i + 2, i + 4), 16);
-    if (Number.isNaN(A) || Number.isNaN(B) || (A === 0 && B === 0)) continue;
-    const type = ["P", "C", "B", "U"][(A & 0xc0) >> 6];
-    const d1 = ((A & 0x30) >> 4).toString(16);
-    const d2 = (A & 0x0f).toString(16);
-    const d3 = ((B & 0xf0) >> 4).toString(16);
-    const d4 = (B & 0x0f).toString(16);
-    codes.push((type + d1 + d2 + d3 + d4).toUpperCase());
+  for (const prefix of ["43", "47", "4A"]) {
+    const idx = clean.indexOf(prefix);
+    if (idx < 0) continue;
+    const data = clean.slice(idx + 2);
+    const codes = [];
+    for (let i = 0; i + 3 < data.length; i += 4) {
+      const A = parseInt(data.slice(i, i + 2), 16);
+      const B = parseInt(data.slice(i + 2, i + 4), 16);
+      if (Number.isNaN(A) || Number.isNaN(B) || (A === 0 && B === 0)) continue;
+      const type = ["P", "C", "B", "U"][(A & 0xc0) >> 6];
+      const d1 = ((A & 0x30) >> 4).toString(16);
+      const d2 = (A & 0x0f).toString(16);
+      const d3 = ((B & 0xf0) >> 4).toString(16);
+      const d4 = (B & 0x0f).toString(16);
+      codes.push((type + d1 + d2 + d3 + d4).toUpperCase());
+    }
+    if (codes.length) return [...new Set(codes)];
   }
-  return [...new Set(codes)];
+  return [];
+}
+
+function nextPollCmd(tick) {
+  if (tick % 40 === 15) return "0105";
+  if (tick % 40 === 30) return "010F";
+  if (tick % 40 === 0) return "0133";
+  if (tick % 10 === 5) return "010D";
+  if (tick % 10 === 8) return "010E";
+  const fast = tick % 4;
+  if (fast === 0) return "010C";
+  if (fast === 1) return "010B";
+  if (fast === 2) return "0111";
+  return "0149";
+}
+
+function pidKey(cmd) {
+  return Object.entries(PID_MAP).find(([, v]) => v === cmd)?.[0];
 }
 
 export function createObdClient({ onLog, onTelemetry, onStatus }) {
@@ -89,11 +125,19 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
   let writeChar = null;
   let rxBuffer = "";
   let polling = false;
+  let pollPaused = false;
   let simTimer = null;
-  let mode = "idle"; // idle | live | sim
+  let mode = "idle";
+  let pollTick = 0;
+  let lastTelemetry = {};
 
   const log = (msg, level = "info") => onLog?.(msg, level);
   const status = (s) => onStatus?.(s);
+
+  function emitTelemetry(patch) {
+    lastTelemetry = enrichTelemetry({ ...lastTelemetry, ...patch });
+    onTelemetry?.(lastTelemetry);
+  }
 
   async function write(cmd) {
     if (!writeChar) throw new Error("未接続");
@@ -146,12 +190,8 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
       const ch = await service.getCharacteristic(characteristicUuid);
       const canNotify = ch.properties.notify || ch.properties.indicate;
       const canWrite = ch.properties.write || ch.properties.writeWithoutResponse;
-      if (canNotify && canWrite) {
-        return { notify: ch, writeable: ch };
-      }
-      if (canNotify) {
-        return { notify: ch, writeable: ch };
-      }
+      if (canNotify && canWrite) return { notify: ch, writeable: ch };
+      if (canNotify) return { notify: ch, writeable: ch };
       throw new Error("キャラクタリスティックが通知/書き込みに対応していません");
     }
 
@@ -182,15 +222,11 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
     }
 
     const services = await server.getPrimaryServices();
-    let notify = null;
-    let writeable = null;
     for (const service of services) {
       try {
         const pair = await findCharsInService(service, null);
-        notify = pair.notify;
-        writeable = pair.writeable;
         log(`GATTプロファイル: フォールバック (${service.uuid})`);
-        return { notify, writeable, profile: { label: "Unknown" } };
+        return { notify: pair.notify, writeable: pair.writeable, profile: { label: "Unknown" } };
       } catch {
         /* continue */
       }
@@ -227,38 +263,38 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
 
     status("connected");
     mode = "live";
+    pollTick = 0;
     log(`接続: ${device.name || "BLE device"}`);
     await initElm();
     startPolling();
   }
 
   async function pollOnce() {
-    const telemetry = {};
-    for (const [key, pid] of Object.entries(PIDs)) {
-      try {
-        const res = await sendAndWait(pid, 1800);
-        const hex = res.replace(/[^0-9A-Fa-f\s]/g, " ");
-        // skip header echo: look for bytes after 41 XX
-        const m = hex.toUpperCase().match(/41\s*[0-9A-F]{2}\s*((?:[0-9A-F]{2}\s*)+)/);
-        const payload = m ? m[1] : "";
-        telemetry[key] = decodePid(pid, payload);
-      } catch {
-        telemetry[key] = null;
-      }
+    pollTick += 1;
+    const cmd = nextPollCmd(pollTick);
+    const key = pidKey(cmd);
+    try {
+      const res = await sendAndWait(cmd, 1500);
+      const hex = res.replace(/[^0-9A-Fa-f\s]/g, " ");
+      const m = hex.toUpperCase().match(/41\s*[0-9A-F]{2}\s*((?:[0-9A-F]{2}\s*)+)/);
+      const payload = m ? m[1] : "";
+      const value = decodePid(cmd, payload);
+      if (key && value != null) emitTelemetry({ [key]: value });
+    } catch {
+      /* 次サイクルで再試行 */
     }
-    // MAP(kPa) を簡易ブースト表示用に残す
-    if (telemetry.map != null) {
-      telemetry.boostBar = Math.max(0, (telemetry.map - 100) / 100);
-    }
-    onTelemetry?.(telemetry);
   }
 
   async function startPolling() {
     if (polling) return;
     polling = true;
     while (polling && mode === "live") {
+      if (pollPaused || document.hidden) {
+        await sleep(500);
+        continue;
+      }
       await pollOnce();
-      await sleep(200);
+      await sleep(80);
     }
   }
 
@@ -266,16 +302,22 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
     polling = false;
   }
 
+  function setPollPaused(paused) {
+    pollPaused = paused;
+  }
+
   async function readDtcs() {
-    if (mode === "sim") {
-      return ["P0301", "P1062"];
-    }
+    if (mode === "sim") return ["P0301", "P1062"];
     if (mode !== "live") throw new Error("先に接続してください");
     stopPolling();
     try {
-      const res = await sendAndWait("03", 4000);
-      log(res.trim());
-      return parseMode03(res);
+      const all = [];
+      for (const modeCmd of ["03", "07", "0A"]) {
+        const res = await sendAndWait(modeCmd, 4000);
+        log(res.trim());
+        all.push(...parseMode03(res));
+      }
+      return [...new Set(all)];
     } finally {
       startPolling();
     }
@@ -326,24 +368,31 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
   function startSimulation() {
     disconnect(false);
     mode = "sim";
+    pollTick = 0;
     status("sim");
     log("デモモード開始");
     let t = 0;
     simTimer = setInterval(() => {
-      t += 1;
-      const rpm = 850 + Math.round((Math.sin(t / 8) * 0.5 + 0.5) * 4200);
-      const speed = Math.round((Math.sin(t / 14) * 0.5 + 0.5) * 110);
-      const coolant = 78 + Math.round((Math.sin(t / 30) * 0.5 + 0.5) * 12);
-      const map = 35 + Math.round((Math.sin(t / 10) * 0.5 + 0.5) * 120);
-      onTelemetry?.({
-        rpm,
-        speed,
-        coolant,
-        map,
-        throttle: Math.round((rpm - 850) / 45),
-        boostBar: Math.max(0, (map - 100) / 100),
+      if (pollPaused || document.hidden) return;
+      t += 0.05;
+      const rpm = 3800 + Math.sin(t) * 3000;
+      const speed = 40 + Math.sin(t) * 20;
+      const coolant = 85 + Math.sin(t * 0.2) * 15;
+      const boostBar = Math.max(0, Math.sin(t) * 1.6);
+      const map = boostBar > 0 ? boostBar * 100 + 100 : 30 + (rpm / 8000) * 70;
+      emitTelemetry({
+        rpm: Math.round(rpm),
+        speed: Math.round(speed),
+        coolant: Math.round(coolant),
+        intake: 24 + Math.round(Math.sin(t * 0.3) * 8),
+        baro: 101,
+        map: Math.round(map),
+        throttle: boostBar > 1.2 ? 20 : Math.min(100, Math.round(50 + Math.sin(t) * 60)),
+        pedal: rpm > 1500 ? Math.min(100, Math.round(50 + Math.sin(t) * 60)) : 0,
+        timing: 15 + Math.sin(t) * 5,
+        boostBar,
       });
-    }, 200);
+    }, 100);
   }
 
   function stopSimulation() {
@@ -365,6 +414,7 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
     characteristic = null;
     writeChar = null;
     mode = "idle";
+    lastTelemetry = {};
     if (notify) {
       status("disconnected");
       log("切断");
@@ -375,6 +425,10 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
     return mode;
   }
 
+  function getTelemetry() {
+    return { ...lastTelemetry };
+  }
+
   return {
     connect,
     disconnect,
@@ -383,5 +437,7 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
     clearDtcs,
     readVin,
     getMode,
+    getTelemetry,
+    setPollPaused,
   };
 }

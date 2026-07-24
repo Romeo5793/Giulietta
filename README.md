@@ -29,6 +29,13 @@ python3 -m http.server 5173 --bind 127.0.0.1
 
 Chrome または Edge で `http://127.0.0.1:5173` を開く。
 
+### 家族向け（HTTPS・インストール不要）
+
+**https://romeo5793.github.io/Giulietta/**
+
+- 手順の詳細: [`docs/FAMILY.md`](docs/FAMILY.md)
+- `main` ブランチへ push すると GitHub Pages に自動反映されます
+
 ### Mac で初めて使うとき
 
 ```bash

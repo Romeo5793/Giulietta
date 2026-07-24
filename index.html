@@ -13,6 +13,9 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/dashboard.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   </head>
   <body>
     <div id="app">
@@ -122,7 +125,10 @@
         </div>
 
         <div class="panel">
-          <h2 class="panel-title">ライブ</h2>
+          <div class="row" style="justify-content: space-between; align-items: center">
+            <h2 class="panel-title" style="margin: 0">ライブ</h2>
+            <button id="btn-open-dashboard" class="btn btn-primary" type="button">フルメーター</button>
+          </div>
           <div class="gauge-grid" style="margin-top: 0.75rem">
             <div class="gauge"><div class="v" id="g-rpm">—</div><div class="u">RPM</div></div>
             <div class="gauge"><div class="v" id="g-speed">—</div><div class="u">km/h</div></div>
@@ -251,6 +257,182 @@
     </nav>
 
     <div id="toast" class="toast" role="status"></div>
-    <script type="module" src="./js/app.js"></script>
+
+    <div id="dashboard-root">
+      <button type="button" id="db-back-btn" class="db-back"><i class="fa-solid fa-arrow-left"></i> 戻る</button>
+      <div id="app-wrapper" class="carbon-bg p-3 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <div id="flash-overlay" class="pointer-events-none absolute inset-0 z-50 opacity-0 transition-opacity"></div>
+        <aside class="w-[18%] max-w-[155px] flex flex-col justify-between items-start py-0.5">
+          <div class="w-full relative z-10">
+            <div class="flex justify-between items-center w-full">
+              <h1 id="brand-logo" class="cursor-pointer hover:opacity-80 transition-opacity" onclick="toggleRetroSkin()"></h1>
+              <div class="flex gap-2.5">
+                <button type="button" onclick="toggleRetroSkin()" class="text-gray-500 hover:text-white transition-all text-xs" title="テーマ切替"><i class="fa-solid fa-palette"></i></button>
+                <button type="button" onclick="openSettings()" class="text-gray-500 hover:text-white transition-all text-xs" title="設定"><i class="fa-solid fa-gear"></i></button>
+              </div>
+            </div>
+            <div class="flex items-center gap-1 mt-0.5">
+              <span id="status-indicator" class="w-1.5 h-1.5 rounded-full bg-yellow-500 shadow-lg shadow-yellow-500/50 animate-pulse"></span>
+              <span id="connection-status" class="text-[8px] font-bold text-gray-400 uppercase tracking-wider font-mono">Demo Mode</span>
+            </div>
+          </div>
+          <div class="my-auto flex flex-col items-center gap-1 w-full relative z-10">
+            <div id="dna-switch-container" class="flex flex-col items-center gap-1 w-full">
+              <span class="text-[8px] font-bold tracking-widest text-gray-500 font-mono uppercase">Alfa DNA</span>
+              <div class="dna-switch-track flex flex-col items-center p-1 rounded-2xl border border-white/5 w-[46px] shadow-2xl">
+                <button type="button" onclick="setDNAMode('dynamic')" id="dna-d" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-gray-500 hover:text-white transition-all duration-300">D</button>
+                <div class="w-4 h-[1px] bg-white/10 my-0.5"></div>
+                <button type="button" onclick="setDNAMode('natural')" id="dna-n" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-white bg-gray-500/40 shadow-md transition-all duration-300">N</button>
+                <div class="w-4 h-[1px] bg-white/10 my-0.5"></div>
+                <button type="button" onclick="setDNAMode('allweather')" id="dna-a" class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-serif-brand font-bold text-gray-500 hover:text-white transition-all duration-300">A</button>
+              </div>
+            </div>
+            <div id="brand-carousel-container" class="hidden flex-col w-full h-[110px] opacity-70 overflow-hidden relative mask-image-vertical">
+              <div class="animate-staff-roll flex flex-col w-full absolute top-0">
+                <div id="staff-roll-content-1" class="flex flex-col items-center gap-2 pb-2"></div>
+                <div id="staff-roll-content-2" class="flex flex-col items-center gap-2 pb-2"></div>
+              </div>
+            </div>
+          </div>
+          <div class="w-full flex flex-col gap-1 relative z-10">
+            <button type="button" onclick="triggerDTCScan()" class="w-full flex items-center justify-center gap-1 text-[7.5px] font-bold tracking-widest py-1.5 rounded-md border border-red-500/20 bg-red-950/10 text-red-400 hover:bg-red-950/20 transition-all font-mono uppercase"><i class="fa-solid fa-triangle-exclamation"></i> <span>DTC DIAG</span></button>
+            <button type="button" onclick="exportCSVLog()" class="w-full flex items-center justify-center gap-1 text-[7.5px] font-bold tracking-widest py-1.5 rounded-md border border-emerald-500/20 bg-emerald-950/10 text-emerald-400 hover:bg-emerald-950/20 transition-all font-mono uppercase"><i class="fa-solid fa-file-csv"></i> <span>SAVE CSV</span></button>
+            <button type="button" id="connect-btn" onclick="triggerBluetoothConnection()" class="w-full flex items-center justify-center gap-1 text-[7.5px] font-bold tracking-widest py-1.5 rounded-md border border-blue-500/20 bg-blue-950/10 text-blue-400 hover:bg-blue-950/20 transition-all font-mono uppercase"><i id="connect-icon" class="fa-solid fa-bluetooth"></i> <span id="connect-text">Connect Car</span></button>
+          </div>
+        </aside>
+        <main class="flex-1 flex flex-col items-center justify-center gap-1.5 px-3 z-10 pointer-events-none">
+          <div class="flex items-center justify-center gap-4 w-full pointer-events-auto">
+            <div class="relative w-[180px] h-[180px] flex items-center justify-center shrink-0">
+              <div id="dial-glow" class="absolute inset-1.5 rounded-full transition-all duration-300"></div>
+              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 200 200" aria-hidden="true">
+                <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(255,255,255,0.01)" stroke-width="8"/>
+                <circle id="gauge-ticks" cx="100" cy="100" r="85" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6" stroke-dasharray="2 12"/>
+                <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(209, 18, 28, 0.15)" stroke-width="4" stroke-dasharray="133 400" stroke-dashoffset="-400"/>
+                <circle id="gauge-arc" cx="100" cy="100" r="85" fill="none" stroke="#9CA3AF" stroke-width="8" stroke-dasharray="534" stroke-dashoffset="534" stroke-linecap="round"/>
+              </svg>
+              <div class="absolute flex flex-col items-center justify-center text-center">
+                <span id="rpm-label" class="text-[8px] font-bold tracking-widest text-gray-500 font-mono">RPM</span>
+                <span id="rpm-value" class="text-4xl font-bold font-mono tracking-tight text-white smooth-value leading-none mt-0.5">800</span>
+                <div class="h-3.5 mt-1 flex items-center justify-center">
+                  <span id="shift-indicator" class="hidden text-[7px] font-extrabold text-[#D1121C] animate-rapid tracking-wider"><i class="fa-solid fa-angles-up"></i> SHIFT UP</span>
+                </div>
+              </div>
+              <span id="dna-status-label" class="text-[7px] font-bold uppercase tracking-widest text-gray-400 font-mono absolute bottom-5">DNA: Natural</span>
+            </div>
+            <div class="w-[180px] h-[180px] flex flex-col gap-2 pointer-events-none shrink-0">
+              <div id="g-sensor-card" class="glass-card flex-1 p-2 flex items-center justify-between relative pointer-events-auto overflow-hidden">
+                <button type="button" onclick="calibrateGForce()" class="absolute top-1.5 right-1.5 text-[6px] text-blue-400 border border-blue-400/20 px-1 rounded hover:bg-blue-400/10 transition-all uppercase z-10">CAL</button>
+                <div class="w-[72px] h-[72px] flex items-center justify-center relative shrink-0">
+                  <canvas id="g-canvas" width="144" height="144" class="w-full h-full bg-black/40 rounded-full border border-white/5"></canvas>
+                </div>
+                <div class="flex-1 flex flex-col justify-center pl-3 gap-0.5 text-[7px] font-mono text-right">
+                  <div class="flex justify-between items-end"><span class="text-gray-500">LAT</span> <span id="lat-g-value" class="text-white font-bold leading-none smooth-value text-[8px]">0.00 G</span></div>
+                  <div class="flex justify-between items-end"><span class="text-gray-500">LNG</span> <span id="long-g-value" class="text-white font-bold leading-none smooth-value text-[8px]">0.00 G</span></div>
+                  <div class="flex justify-between items-end border-t border-white/5 pt-1 mt-0.5"><span class="text-amber-500">PEAK</span> <span id="peak-g-value" class="text-amber-400 font-bold leading-none smooth-value text-[8px]">0.00 G</span></div>
+                </div>
+              </div>
+              <div id="power-display-card" class="glass-card flex-1 p-2 flex flex-col justify-center relative pointer-events-auto">
+                <div class="w-full flex justify-between items-end text-[7px] font-bold font-mono mb-1.5">
+                  <span class="text-gray-500 tracking-widest">DYNAMO</span>
+                  <span class="text-[5px] text-gray-500 font-normal">MAX <span id="peak-hp" class="text-white">0</span>PS / <span id="peak-torque" class="text-white">0</span>Nm</span>
+                </div>
+                <div class="flex-1 flex flex-col justify-center gap-2">
+                  <div class="flex flex-col gap-0.5">
+                    <div class="flex justify-between items-end text-[6px] font-mono"><span class="text-amber-500/80 tracking-widest">POWER</span><div class="flex items-baseline gap-0.5"><span id="hp-value" class="text-base font-bold text-white smooth-value leading-none">0</span> <span class="text-[6px] text-gray-500">PS</span></div></div>
+                    <div class="w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10"><div id="hp-bar" class="h-full bg-gradient-to-r from-amber-600 to-amber-400 transition-all duration-150 ease-out" style="width:0%"></div></div>
+                  </div>
+                  <div class="flex flex-col gap-0.5">
+                    <div class="flex justify-between items-end text-[6px] font-mono"><span class="text-orange-500/80 tracking-widest">TORQUE</span><div class="flex items-baseline gap-0.5"><span id="torque-value" class="text-base font-bold text-white smooth-value leading-none">0</span> <span class="text-[6px] text-gray-500">Nm</span></div></div>
+                    <div class="w-full h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10"><div id="torque-bar" class="h-full bg-gradient-to-r from-orange-600 to-orange-400 transition-all duration-150 ease-out" style="width:0%"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="big-boost-card" class="w-full max-w-[380px] glass-card py-2 px-3 flex flex-col justify-between pointer-events-auto relative overflow-hidden shrink-0 mt-1 h-[75px]">
+            <div class="absolute -right-4 -top-4 text-white/5 text-[60px] pointer-events-none"><i class="fa-solid fa-gauge-simple-high"></i></div>
+            <div class="flex justify-between items-start mb-1 z-10 w-full relative pt-1 px-1">
+              <span class="text-[8px] font-bold font-mono tracking-widest text-gray-400 flex items-center gap-1"><i class="fa-solid fa-gauge-simple-high text-gray-500"></i> TURBO BOOST</span>
+              <div class="flex items-baseline gap-0.5 mt-[-4px]"><span id="big-boost-value" class="text-[26px] font-bold font-mono text-white leading-none smooth-value">0.00</span><span class="text-[8px] text-gray-500 font-mono">BAR</span></div>
+            </div>
+            <div class="absolute bottom-1 left-0 w-full h-[45px] flex justify-center items-end px-3">
+              <svg viewBox="0 0 300 80" class="w-full h-full overflow-visible" preserveAspectRatio="none" aria-hidden="true">
+                <defs>
+                  <clipPath id="boost-wedge-clip"><path d="M 10 70 Q 150 10 290 30 L 290 70 Q 150 40 10 70 Z"/></clipPath>
+                  <linearGradient id="boost-grad-normal" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#9ca3af"/><stop offset="100%" stop-color="#ffffff"/></linearGradient>
+                </defs>
+                <path d="M 10 70 Q 150 10 290 30 L 290 70 Q 150 40 10 70 Z" fill="#050507" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"/>
+                <g clip-path="url(#boost-wedge-clip)"><rect id="big-boost-bar-rect" x="0" y="0" width="0%" height="100%" fill="url(#boost-grad-normal)" class="transition-all duration-150 ease-out"/></g>
+                <path d="M 100 5 L 100 85" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" clip-path="url(#boost-wedge-clip)"/>
+                <path d="M 195 5 L 195 85" stroke="rgba(239,68,68,0.5)" stroke-width="2" clip-path="url(#boost-wedge-clip)"/>
+              </svg>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 w-full max-w-[380px] h-[48px] pointer-events-auto shrink-0 mt-0.5">
+            <div id="speed-card" class="glass-card p-1.5 px-2 flex flex-col justify-between"><div class="flex items-center justify-between text-gray-500 text-[6px] font-bold font-mono"><span>SPEED</span><i class="fa-solid fa-gauge-high text-white/20"></i></div><div class="flex items-baseline justify-between leading-none"><span id="speed-value" class="text-sm font-bold font-mono text-white leading-none smooth-value">0</span><span class="text-[5px] text-gray-500 font-semibold uppercase">km/h</span></div><div class="text-[5px] text-gray-500 font-mono flex justify-between border-t border-white/5 pt-0.5 mt-auto"><span>MAX</span><span id="peak-speed">0</span></div></div>
+            <div id="coolant-card" class="glass-card p-1.5 px-2 flex flex-col justify-between"><div class="flex items-center justify-between text-gray-500 text-[6px] font-bold font-mono"><span>COOLANT</span><i id="coolant-icon" class="fa-solid fa-thermometer-half text-green-500/70"></i></div><div class="flex items-baseline justify-between leading-none"><span id="coolant-value" class="text-sm font-bold font-mono text-white leading-none smooth-value">85</span><span class="text-[5px] text-gray-500 font-semibold uppercase">°C</span></div><div class="text-[5px] text-gray-500 font-mono flex justify-between border-t border-white/5 pt-0.5 mt-auto"><span>MAX</span><span id="peak-coolant">85</span></div></div>
+            <div id="dynamic-card" class="glass-card p-1.5 px-2 flex flex-col justify-between"><div class="flex items-center justify-between text-gray-500 text-[6px] font-bold font-mono"><span id="dynamic-card-title">INTAKE</span><i id="dynamic-card-icon" class="fa-solid fa-wind text-cyan-400/70"></i></div><div class="flex items-baseline justify-between leading-none"><span id="dynamic-card-value" class="text-sm font-bold font-mono text-white leading-none smooth-value">24</span><span id="dynamic-card-unit" class="text-[5px] text-gray-500 font-semibold uppercase">°C</span></div><div class="text-[5px] text-gray-500 font-mono flex justify-between border-t border-white/5 pt-0.5 mt-auto"><span>MAX</span><span id="peak-dynamic">24</span></div></div>
+          </div>
+        </main>
+        <aside class="w-[23%] max-w-[210px] flex flex-col justify-between py-0.5 relative z-10">
+          <div id="panel-console" class="flex-1 rounded-xl bg-black/90 border border-white/5 overflow-hidden flex flex-col h-full pointer-events-auto">
+            <div class="bg-zinc-900/60 p-1.5 text-[8px] font-bold text-gray-500 font-mono tracking-wider border-b border-white/5 flex justify-between items-center"><span class="flex items-center gap-1"><i class="fa-solid fa-terminal text-[#D1121C]"></i> CAN-BUS</span><div class="flex items-center gap-2"><button type="button" onclick="clearConsoleLog()" class="text-[7px] text-gray-400 hover:text-white border border-white/10 px-1 rounded">CLEAR</button><span id="console-live-badge" class="text-green-500 flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping"></span> LIVE</span></div></div>
+            <div id="console-logs-container" class="flex-1 overflow-y-auto p-1.5 font-mono text-[7px] text-cyan-400 flex flex-col-reverse gap-1"><div class="text-green-500 opacity-60">Engine standby. Console active.</div></div>
+          </div>
+        </aside>
+      </div>
+      <div id="g-sensor-modal" class="db-modal hidden">
+        <div class="w-full max-w-sm glass-card bg-zinc-950/95 border-blue-500/20 p-5 shadow-2xl flex flex-col gap-4 text-center">
+          <div class="text-blue-400 text-3xl mb-2 animate-bounce"><i class="fa-solid fa-mobile-screen-button"></i></div>
+          <h3 class="font-bold text-sm tracking-widest text-white">G-SENSOR ACTIVATION</h3>
+          <p class="text-[10px] text-gray-400 leading-relaxed">OBD接続が確立しました。<br>正確なGフォース計測のため、スマホを固定してキャリブレーションしてください。</p>
+          <div class="flex gap-2 mt-2">
+            <button type="button" onclick="skipGsensor()" class="flex-1 py-2 rounded bg-zinc-800 hover:bg-zinc-700 text-gray-300 text-[10px] font-bold font-mono tracking-widest transition-all">SKIP</button>
+            <button type="button" onclick="enableGsensorAndCalibrate()" class="flex-[2] py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)]">ENABLE &amp; CALIBRATE</button>
+          </div>
+        </div>
+      </div>
+      <div id="ble-warning-modal" class="db-modal hidden">
+        <div class="w-full max-w-sm glass-card bg-zinc-950/95 border-amber-500/20 p-5 shadow-2xl flex flex-col gap-4 text-center">
+          <div class="text-amber-400 text-3xl mb-2 animate-pulse"><i class="fa-brands fa-bluetooth"></i></div>
+          <h3 class="font-bold text-sm tracking-widest text-white">WEB BLUETOOTH REQUIRED</h3>
+          <p class="text-[10px] text-gray-400 leading-relaxed text-left">
+            お使いのブラウザ（Safari等）はBluetooth通信に対応していません。<br><br>
+            iPhoneで車両と接続するには、無料のWeb BLE対応ブラウザ<strong>「Bluefy」</strong>アプリでこのページを開く必要があります。
+          </p>
+          <div class="flex flex-col gap-2 mt-2">
+            <a id="btn-open-bluefy" href="#" target="_top" class="w-full py-3 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)] flex items-center justify-center gap-2">
+              <i class="fa-solid fa-arrow-up-right-from-square text-lg"></i> OPEN IN BLUEFY
+            </a>
+            <a href="https://apps.apple.com/jp/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener" class="w-full py-2.5 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-bold font-mono tracking-widest transition-all flex items-center justify-center gap-2">
+              <i class="fa-brands fa-app-store-ios"></i> GET BLUEFY APP
+            </a>
+            <button type="button" onclick="copyAppUrl()" class="w-full py-2.5 rounded bg-zinc-800 hover:bg-zinc-700 text-white text-[10px] font-bold font-mono tracking-widest transition-all flex items-center justify-center gap-2">
+              <i class="fa-solid fa-link"></i> COPY APP URL
+            </button>
+            <button type="button" onclick="closeBleWarning()" class="w-full py-1 mt-1 rounded bg-transparent text-gray-500 hover:text-white text-[10px] font-bold font-mono tracking-widest transition-all border border-gray-600">
+              CONTINUE IN DEMO MODE
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="settings-modal" class="db-modal hidden">
+        <div class="w-full max-w-sm glass-card bg-zinc-950/95 border-gray-500/20 p-5 shadow-2xl flex flex-col gap-4">
+          <div class="flex justify-between items-center border-b border-white/5 pb-2"><h3 class="font-bold text-xs tracking-widest text-gray-300"><i class="fa-solid fa-gear"></i> APP SETTINGS</h3><button type="button" onclick="closeSettings()" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button></div>
+          <div class="flex flex-col gap-2"><label class="text-[10px] text-gray-400 font-mono">GEMINI API KEY</label><input type="password" id="api-key-input" class="w-full bg-black border border-gray-600 rounded p-2 text-xs text-white font-mono focus:border-blue-500 focus:outline-none" placeholder="AIxxx..."><p class="text-[8px] text-gray-500">※キーは端末内にのみ保存されます。</p></div>
+          <button type="button" onclick="saveSettings()" class="w-full py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono tracking-widest">SAVE SETTINGS</button>
+        </div>
+      </div>
+      <div id="dtc-modal" class="db-modal hidden">
+        <div class="w-full max-w-md glass-card bg-zinc-950/95 border-red-500/20 p-5 shadow-2xl flex flex-col gap-4">
+          <div class="flex justify-between items-center border-b border-white/5 pb-2"><h3 class="font-bold text-xs tracking-widest text-red-500 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation animate-pulse"></i> ECU DEEP DIAGNOSTICS</h3><button type="button" onclick="closeDTCScan()" class="text-gray-400 hover:text-white text-sm"><i class="fa-solid fa-xmark"></i></button></div>
+          <div id="ai-response-area" class="hidden mb-2 p-3 bg-blue-950/30 border border-blue-500/30 rounded-lg max-h-[150px] overflow-y-auto"><div class="text-[10px] text-blue-400 font-bold mb-1"><i class="fa-solid fa-robot"></i> GEMINI AI MECHANIC</div><div id="ai-response-text" class="text-[9px] text-gray-300 leading-relaxed markdown-body"></div></div>
+          <div class="flex flex-col gap-3 min-h-[160px] max-h-[220px] overflow-y-auto pr-1"><div class="flex justify-between text-[10px] font-mono bg-white/5 p-1.5 rounded border border-white/5"><span class="text-gray-400">ECU VIN:</span><span id="dtc-vin-code" class="text-white font-bold">---</span></div><div id="dtc-loading-area" class="hidden flex flex-col items-center justify-center gap-2 py-8"><i class="fa-solid fa-circle-notch fa-spin text-red-500 text-xl"></i><span class="text-[10px] font-mono text-gray-400">スキャン中...</span></div><div id="dtc-status-log" class="text-[10px] font-mono flex flex-col gap-1.5"><div class="text-gray-500">「RUN SCAN」で深層読取します。</div></div></div>
+          <div class="flex flex-wrap justify-between gap-2 pt-2 border-t border-white/5"><button type="button" onclick="clearDTCFaults()" id="dtc-clear-btn" class="hidden flex-1 py-2 rounded bg-amber-600 hover:bg-amber-500 text-white text-[10px] font-bold font-mono">CLEAR</button><button type="button" onclick="askGeminiMechanic()" id="dtc-ai-btn" class="hidden flex-1 py-2 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold font-mono"><i class="fa-solid fa-wand-magic-sparkles"></i> ASK AI</button><button type="button" onclick="startDTCScanProcess()" id="dtc-run-btn" class="flex-1 w-full py-2 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold font-mono">RUN DEEP SCAN</button></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./js/app.js?v=2"></script>
   </body>
 </html>

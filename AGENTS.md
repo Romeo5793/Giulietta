@@ -15,7 +15,7 @@
 ### 起動の要点（どちらの OS も共通）
 
 - ローカル HTTP サーバーが必要（`file://` 不可）
-- URL: `http://127.0.0.1:5173`
+- URL: `http://127.0.0.1:5173`（ローカル） / **https://romeo5793.github.io/Giulietta/**（家族向け公開）
 - ブラウザ: Chrome / Edge（OBD・BLE 用）
 
 ### Mac クイックコマンド

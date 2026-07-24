@@ -10,9 +10,16 @@ import {
 } from "./storage.js";
 import { upcomingItems, evaluateItem, itemsFromTemplate } from "./service-plan.js";
 import { templateOptionsHtml } from "./vehicle-templates.js";
-import { createObdClient } from "./obd.js";
+import { createObdClient } from "./obd.js?v=2";
 import { lookupDtc, preloadDtcForMake, SEVERITY_LABELS, severityClass } from "./dtc-dict.js";
 import { askGeminiAboutDtcs } from "./gemini.js";
+import {
+  initDashboard,
+  openDashboard,
+  onDashboardTelemetry,
+  onDashboardStatus,
+  onDashboardLog,
+} from "./dashboard.js";
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
@@ -43,6 +50,8 @@ function setView(name) {
   $$(".nav button").forEach((b) => {
     b.classList.toggle("active", b.dataset.nav === name);
   });
+  const dashboardOpen = document.body.classList.contains("dashboard-active");
+  obd.setPollPaused?.(!dashboardOpen && name !== "obd");
 }
 
 function renderVehicleSwitcher() {
@@ -261,9 +270,28 @@ function appendObdLog(msg) {
 }
 
 const obd = createObdClient({
-  onLog: (msg) => appendObdLog(msg),
-  onTelemetry: updateObdUi,
-  onStatus: setObdStatus,
+  onLog: (msg, level) => {
+    appendObdLog(msg);
+    onDashboardLog(msg, level);
+  },
+  onTelemetry: (telemetry) => {
+    updateObdUi(telemetry);
+    onDashboardTelemetry(telemetry);
+  },
+  onStatus: (s) => {
+    setObdStatus(s);
+    onDashboardStatus(s);
+  },
+});
+
+initDashboard({
+  obdClient: obd,
+  getAppState: () => state,
+  showToast: toast,
+  onSaveSettings: (key) => {
+    state.settings.geminiApiKey = key;
+    saveState(state);
+  },
 });
 
 function formatVinHint(decoded) {
@@ -500,6 +528,10 @@ function wire() {
   });
 
   $("#btn-obd-connect").addEventListener("click", async () => {
+    if (!navigator.bluetooth) {
+      toast("Web Bluetooth非対応です。フルメーターでBluefy案内を確認してください");
+      return;
+    }
     try {
       await obd.connect();
       toast("OBDに接続しました");
@@ -557,6 +589,10 @@ function wire() {
   });
 
   $("#btn-vin-apply").addEventListener("click", applyVinToVehicle);
+
+  $("#btn-open-dashboard")?.addEventListener("click", () => {
+    openDashboard();
+  });
 
   const bleOk = !!navigator.bluetooth;
   $("#ble-hint").textContent = bleOk
