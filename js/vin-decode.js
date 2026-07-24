@@ -105,7 +105,12 @@ function extractVinFromIsoTpBytes(bytes) {
   const idx = findSequence(bytes, [0x49, 0x02]);
   if (idx < 0) return null;
 
-  const dataStart = idx + 3;
+  // 49 02 の次はメッセージ数(01) → その後が VIN 17 文字
+  let dataStart = idx + 3;
+  if (bytes[dataStart] === 0x01 && dataStart + 17 < bytes.length) {
+    dataStart += 1;
+  }
+
   const chars = [];
   for (let i = dataStart; i < bytes.length; i++) {
     const b = bytes[i];
@@ -117,7 +122,16 @@ function extractVinFromIsoTpBytes(bytes) {
     if (chars.length >= 17) break;
   }
   const candidate = chars.join("").toUpperCase();
-  return VIN_RE.test(candidate) ? candidate.match(VIN_RE)[0] : null;
+  if (VIN_RE.test(candidate)) return candidate.match(VIN_RE)[0];
+
+  // フォールバック: 49 02 以降の印字可能 ASCII から 17 文字を拾う
+  let ascii = "";
+  for (let i = dataStart; i < bytes.length; i++) {
+    const b = bytes[i];
+    if (b >= 0x20 && b <= 0x7e) ascii += String.fromCharCode(b);
+  }
+  const match = ascii.match(VIN_RE);
+  return match ? match[0] : null;
 }
 
 function findSequence(arr, seq) {

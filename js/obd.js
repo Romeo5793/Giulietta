@@ -1,5 +1,5 @@
 /** BLE ELM327 アダプタの既知 GATT プロファイル（調査資料 §4.1 準拠） */
-import { decodeVin, parseVinFromObdResponse } from "./vin-decode.js?v=2";
+import { decodeVin, parseVinFromObdResponse } from "./vin-decode.js?v=3";
 
 const BLE_PROFILES = [
   {
@@ -341,6 +341,48 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
 
   const DEMO_VIN = "ZARFA1234H1234567";
 
+  async function waitForVinResponse(timeoutMs = 12000) {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const buf = rxBuffer.toUpperCase();
+      if (buf.includes("NO DATA") || buf.includes("UNABLE TO CONNECT") || buf.includes("BUS INIT")) {
+        const out = rxBuffer;
+        rxBuffer = "";
+        return out;
+      }
+      // Mode 09 のマルチフレーム応答は `>` まで待つ（途中の OK では返さない）
+      if (buf.includes(">") && (buf.includes("49 02") || buf.includes("4902") || buf.includes("49  02"))) {
+        const out = rxBuffer;
+        rxBuffer = "";
+        return out;
+      }
+      await sleep(50);
+    }
+    const out = rxBuffer;
+    rxBuffer = "";
+    return out;
+  }
+
+  async function sendAndWaitVin(cmd) {
+    rxBuffer = "";
+    await write(cmd);
+    return waitForVinResponse();
+  }
+
+  function describeVinFailure(res) {
+    const upper = String(res || "").toUpperCase();
+    if (!upper.trim() || upper.trim() === ">") {
+      return "応答が空でした。イグニッション ON（エンジン始動または ACC）で再試行してください。";
+    }
+    if (upper.includes("NO DATA")) {
+      return "ECU が NO DATA を返しました。この車両は OBD 経由の VIN 読取に未対応の可能性があります。設定画面から手入力できます。";
+    }
+    if (upper.includes("UNABLE TO CONNECT") || upper.includes("BUS INIT")) {
+      return "OBD バスに接続できません。アダプタの差し直し・エンジン ON で再試行してください。";
+    }
+    return "応答を解析できませんでした。ログの生データを確認するか、設定から VIN を手入力してください。";
+  }
+
   async function readVin() {
     if (mode === "sim") {
       const decoded = decodeVin(DEMO_VIN);
@@ -349,14 +391,34 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
     }
     if (mode !== "live") throw new Error("先に接続してください");
     stopPolling();
+    await sleep(250);
     try {
       log("VIN読み取り (Mode 09 02)…");
-      await sendAndWait("ATH1", 3000);
-      const res = await sendAndWait("0902", 8000);
-      log(res.trim().slice(0, 600) || "(empty)");
+      // マルチフレーム（ISO-TP）向け: ヘッダ表示・長文許可・タイムアウト延長
+      for (const c of ["ATH1", "AT AL", "AT ST FF"]) {
+        log(`> ${c}`);
+        await sendAndWait(c, 3000);
+        await sleep(80);
+      }
+
+      let res = await sendAndWaitVin("0902");
+      log(res.trim().slice(0, 800) || "(empty)");
+
+      let vin = parseVinFromObdResponse(res);
+      if (!vin) {
+        log("再試行 (0902)…", "warn");
+        await sleep(400);
+        res = await sendAndWaitVin("0902");
+        log(res.trim().slice(0, 800) || "(empty)");
+        vin = parseVinFromObdResponse(res);
+      }
+
       await sendAndWait("ATH0", 3000);
-      const vin = parseVinFromObdResponse(res);
-      if (!vin) throw new Error("VINを取得できませんでした（車両が Mode 09 に未対応の可能性）");
+      await sendAndWait("AT ST 32", 3000);
+
+      if (!vin) {
+        throw new Error(`VINを取得できませんでした。${describeVinFailure(res)}`);
+      }
       const decoded = decodeVin(vin);
       log(`VIN: ${vin}`);
       return decoded;
