@@ -1,12 +1,17 @@
-# 引き継ぎ — Giulietta Service
+# 引き継ぎ — Garage Log（旧 Giulietta Service）
 
-最終更新: 2026-07-14
+最終更新: 2026-07-24
 
 ## いまの状態
 
-- 新規フォルダ `C:\Users\user\Desktop\giulietta-service`（猫翻訳 `myapp` とは別）
-- Web MVP: ホーム距離 / 整備メニュー＋記録 / BLE OBD＋デモ / DTC / 任意 Gemini
+- **正しいプロジェクト場所:** `C:\Users\user\Documents\Cursor\giulietta-service`
+- デスクトップの `giulietta-service` は上記へのジャンクション（ショートカット用）
+- 猫翻訳 `myapp` とは別リポジトリ
+- Web アプリ名: **Garage Log**（全車種対応の整備手帳 + OBD）
+- 機能: 複数車両 / 整備メニュー＋記録 / BLE OBD＋デモ / メーカー別 DTC 辞書 / 任意 Gemini
 - 仕様: `docs/SPEC.md`
+- OBD 調査資料: `docs/OBDアプリ開発用データ調査.docx`（要約: `docs/obd-research-extract.txt`）
+- 旧 OBD ダッシュボード: `legacy/obd-dashboard.html`（参考用アーカイブ）
 
 ## 次にやること（候補）
 
@@ -18,8 +23,14 @@
 ## 起動
 
 ```bash
-cd C:\Users\user\Desktop\giulietta-service
+cd C:\Users\user\Documents\Cursor\giulietta-service
 npx --yes serve .
+# または
+py -m http.server 5173 --bind 127.0.0.1
 ```
 
-Chrome / Edge で開く。
+Chrome / Edge で `http://127.0.0.1:5173` を開く。
+
+## Cursor で開くとき
+
+**File → Open Folder** で `C:\Users\user\Documents\Cursor\giulietta-service` を選ぶ（デスクトップのジャンクションでも可）。

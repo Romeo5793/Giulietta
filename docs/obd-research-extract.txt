@@ -1,0 +1,207 @@
+OBD接続iOS汎用車両整備アプリ開発における多極メーカーDTCデータ統合およびBLE通信実装研究報告
+1. 自動車故障診断（OBD-II/UDS）の規格体系とDTCデコードアルゴリズム
+車載電子制御ユニット（ECU）内の自己診断システム（On-Board Diagnostics: OBD-II）は、環境規制の遵守や安全運行を保証するために車載システムを監視し、異常を検知した際にはその現象を特定可能な故障診断コード（Diagnostic Trouble Code: DTC）として記録する1。DTCの構成および解釈ルールは、国際標準化機構（ISO 15031-6）および自動車技術会（SAE J2012）によって世界的に統一されている1。
+通常、OBD-IIスキャンツールや汎用診断アプリが物理層から受信するデータは、2バイト（16ビット）の16進数（バイナリ）の配列である6。このバイナリデータをユーザーインターフェース上に表示する際には、規定のアルゴリズムに従って5文字のアルファベットおよび数字からなる識別コードへ変換しなければならない1。
+DTCコードの先頭1文字目（プレフィックス）は、車両内の大分類となる機能システムに対応している1。これは、ECUメモリに格納される2バイトデータの第1バイトの上位2ビット（Bit 7およびBit 6）をマッピングすることで決定される6。
+第2文字目は、SAE/ISOが策定した共通規格であるか、あるいは自動車メーカーが独自に定義したコードであるかを識別するコード分類を示す1。第1バイトのBit 5およびBit 4（2ビット分）のバイナリ値がこれに対応する6。
+第3文字目は、具体的な電子・機械的サブシステム（燃料計量、点火システム、補助排出ガス制御、トランスミッションなど）を指示する9。これは第1バイトの下位4ビット（Bit 3〜0）を16進文字表現（0〜F）に変換して抽出される1。
+第4文字目および第5文字目は、障害が発生した特定の構成部品や、具体的な電気回路エラーの状態（オープン、ショート、範囲外入力等）を示す1。これらは第2バイトの全8ビット（Bit 7〜0）から得られ、前半部（Bit 7〜4）と後半部（Bit 3〜0）をそれぞれ16進表現に直接変換することで得られる1。
+UDS（Unified Diagnostic Services: ISO 14229-1）規格に対応した車両診断（非OBD通信）では、上記2バイトの標準コードに3バイト目として「故障サブタイプ（Failure Type Byte: FTB）」を付与する体系が広く採用されている1。FTBは物理的な故障モードを精密に表現するために用意された規格領域であり、センサーの信号特性に合わせて定義が細分化されている1。
+分類コード領域 (DTC Hex Range)
+機能分類プレフィックス (Prefix)
+搭載対象コントロールシステム例
+代表的な故障サブタイプコード (FTB Hex)
+故障サブタイプ定義
+0x0000 - 0x3FFF
+[cite: 10]
+P (Powertrain)1
+エンジン、トランスミッション、燃料供給11
+0x11
+制限値を超えた過大入力 (Signal Above Max)
+0x4000 - 0x7FFF
+[cite: 10]
+C (Chassis)1
+ABS、サスペンション、トラクション制御11
+0x12
+制限値を下回る過小入力 (Signal Below Min)
+0x8000 - 0xBFFF
+[cite: 10]
+B (Body)1
+エアコン、エアバッグ、スマートキー、ドア11
+0x23
+信号が低レベルに固定 (Signal Stuck Low)1
+0xC000 - 0xFFFF
+[cite: 10]
+U (Network)1
+CANバス通信、ECU間パケット転送1
+0x24
+信号が高レベルに固定 (Signal Stuck High)1
+2. 自動車メーカー別故障診断コード（DTC）データ分析と統計
+汎用的な診断アプリとして市場に展開するためには、SAEで標準化された約9,000件の共通コードのみならず、世界各国の主要自動車メーカー（OEM）が独自に定義しているメーカー固有のDTCデータ（P1、C1、B1、U1プレフィックス群）の統合が不可欠である3。これらのメーカー固有コードは、標準コード定義には存在しない独自のシステム動作ロジック（例：ハイブリッド協調制御、ミリ波レーダーなどのADASユニット）をターゲットとしているため、これがアプリ上で適切に翻訳されない場合、自動車整備の現場において実用性を維持することが困難となる12。
+代表的なオープンソースの診断コードリポジトリ（Wal33D/dtc-databaseやAutomotive-9/dtc-codesなど）の分析から、メーカー固有DTCの登録状況には顕著な偏りがあることが判明している14。これは各メーカーが搭載しているECUの種類、制御レイヤーの複雑さ、および診断情報の開示姿勢に起因している。
+自動車メーカー (OEM)
+固有DTC登録件数
+診断通信におけるプロトコルの特徴と技術的傾向
+Volkswagen / Audi
+9,137件15
+制御ノードが極めて多く、UDSプロトコルによる3バイト記述が早期から発達1。
+General Motors (GM)
+5,325件15
+シングルワイヤCAN (GMLAN) 規格を長年採用3。J2190独自のカスタムサービスが混在。
+BMW
+4,781件15
+各ユニットに詳細な障害管理テーブルを持ち、K-LineからCAN/Ethernet（DoIP）へ早期移行。
+Mitsubishi
+3,998件15
+4WDシステム、電動パワーステアリング、ASCモジュールに多数の個別DTCを定義。
+Nissan
+3,409件15
+国産車規格（JOBD）とグローバルISO規格を併用3。UDS移行後の詳細コードが多い。
+Ford
+3,315件15
+サービスID 22（J2190定義）を介した拡張PID要求が古くから標準化されている17。
+Chrysler
+665件15
+PCIバス (SAE J1850) からCANへの変遷プロセスに応じた過渡期の固有DTCが混在3。
+Honda
+367件15
+エンジン制御システム（VTEC、ハイブリッドIMAシステム）を中心とした固有コード。
+Fiat
+246件15
+小型車特有の電子部品（Body Control Module）やセレスピード関連に特化。
+Alfa Romeo
+29件15
+公開・登録データ数は少ないが、制御コンポーネントは基本的にFiatグループに準拠。
+上記データ統計の背景として、オープンソースのローカルSQLiteリレーショナルデータベース全体の構成比を分析すると、登録されている総コード定義数の約49.9%（9,390件）が各メーカー固有の仕様コードであり、約50.1%（9,415件）が汎用SAE J2012基準の定義に分類される14。
+この統計値が示唆するように、世界規模で販売された車両を正しくスキャンするためには、全体の半分を占めるメーカー固有コード群を車両のブランドに応じて柔軟に適合・切り替え（ルーティング）する設計が必要とされる14。
+3. アプリケーションで即時活用可能なDTCデータフォーマットの設計
+iOSアプリケーション開発において、デコードしたDTCから不具合の日本語名や詳細情報、重要度レベルを高速に引き当てるためには、クエリパフォーマンスが優れ、かつメンテナンス性の高いデータ構造の設計が求められる14。本システムにおいては、動的なデータロードが容易でメモリ負荷を抑えられる「メーカー別分割型JSON構造」および「ローカル組み込み型SQLite」のデュアルスタックによるデータ構造設計を採用する14。
+3.1 アプリケーション統合用JSONデータスキーマ設計
+iOSの Decodable プロトコルによる自動マッピングを可能にするため、メーカーごとに以下のJSONスキーマを構築する15。これにより、車両識別情報（VIN）からメーカーが判別された際に、該当メーカー用のリソースファイル（例：BMW.json, Toyota.json）のみをバンドルから遅延読み込み（Lazy Load）することが可能となり、アプリ起動時のメモリフットプリントを大幅に削減できる15。
+JSON
+{  "manufacturer": "TOYOTA",  "version": "2026.1",  "codes": [    {      "code": "P0117",      "category": "Powertrain",      "is_generic": true,      "summary_en": "Engine Coolant Temperature Circuit Low Input",      "summary_ja": "エンジン水温センサー回路入力値異常低",      "severity": 2    },    {      "code": "P1690",      "category": "Powertrain",      "is_generic": false,      "summary_en": "Wastegate Solenoid Valve Malfunction",      "summary_ja": "ウエストゲートソレノイドバルブ制御回路機能不良",      "severity": 3    }  ]}
+3.2 モバイルデータベース（SQLite）の構築とマッピング定義
+アプリ内での多対多の関係や、メーカーを跨いだ横断的なフリーワード曖昧検索（日本語の「失火」や英語の「misfire」などでの抽出）に対応するため、ローカルデータベースは以下のテーブルスキーマ構成をとる14。
+テーブル名 (Table)
+カラム名 (Column)
+データ型 (Data Type)
+制約・外部キー定義 (Constraints)
+manufacturers
+id
+code
+name_ja
+INTEGER
+TEXT
+TEXT
+PRIMARY KEY AUTOINCREMENT
+NOT NULL UNIQUE (例: 'TOYOTA')14
+NULL (日本語メーカー正式名称)
+dtc_dictionary
+id
+dtc_code
+manufacturer_id
+description_en
+description_ja
+category
+severity_level
+INTEGER
+TEXT
+INTEGER
+TEXT
+TEXT
+TEXT
+INTEGER
+PRIMARY KEY AUTOINCREMENT
+NOT NULL (5文字の文字列。例: 'P0117')
+FOREIGN KEY (REFERENCES manufacturers.id) NULL14
+NOT NULL (英語診断文)14
+NULL (日本語診断訳)
+NOT NULL ('Powertrain', 'Chassis' 等)14
+DEFAULT 0 (0:警告, 1:軽度, 2:要整備, 3:即時停車)
+このスキーマにおいて最も重要となるのは、dtc_code と manufacturer_id に対する複合インデックス（Composite Index）の生成である14。汎用DTC（manufacturer_id が NULL の共通コード）とメーカー固有DTC（特定のIDに依存）が同じコード値（例：P1200）を持つ場合でも、車両スキャン時に瞬時に該当メーカーの正しい定義を優先して引き当てるためのクエリ設計は以下のように行う14。
+SQL
+CREATE INDEX idx_dtc_search ON dtc_dictionary (dtc_code, manufacturer_id);-- 特定メーカーのDTCを優先して検索。該当がなければ汎用コードを返却するSELECT d.dtc_code, m.code AS maker, d.description_ja, d.severity_levelFROM dtc_dictionary dLEFT JOIN manufacturers m ON d.manufacturer_id = m.idWHERE d.dtc_code = 'P1650' [cite: 20]  AND (m.code = 'FORD' OR d.manufacturer_id IS NULL) [cite: 14]ORDER BY d.manufacturer_id DESCLIMIT 1;
+4. iOS (CoreBluetooth) を用いたELM327 BLE通信アーキテクチャの実装
+iOS端末における外部インターフェースデバイス（ELM327ドングル）とのペアリングにおいて、Wi-Fiドングルは「接続中にiPhone本体がセルラーネットワークから切断される」「インターネットにアクセスできなくなる」といった車載環境において不便な副作用をもたらす19。そのため、実用的な整備アプリにおいては、iOS側のデータ通信制限を一切受けず、バッググラウンド復帰もサポートされているBluetooth Low Energy（BLE）通信の採用が事実上のデファクトスタンダードである19。
+4.1 各種BLE診断ドングルのGATTプロファイル特性
+市場に流通しているELM327搭載BLEドングルは、通信用ICの設計思想の違いにより、異なるGATT（Generic Attribute Profile）プロファイル、サービスUUID、および書き込み/通知用キャラクタリスティックUUIDを採用している17。iOSアプリ側でこれらのデバイスに透過的に接続するためには、以下のプロファイル構造を動的にスキャンし分けるファクトリーパターンを実装する必要がある17。
+アダプター製品 / 通信規格
+サービスUUID (Service UUID)
+キャラクタリスティックUUID (Characteristic UUID)
+BLEデータ送受信プロパティ (Properties)
+LELink / 汎用格安ドングル
+FFE0
+[cite: 17]
+FFE1
+[cite: 17]
+Write, Notify17
+(データ送信・受信が同一ラインで行われる仮想シリアル接続)
+IOS-Vlink / OBDLink
+E7810A71-73AE-499D-8C15-FAA9AEF0C3F2
+[cite: 23]
+BEF8D6C9-9C21-4C9E-B632-BD58C1009F9F
+[cite: 23]
+Write, Notify23
+(高精度通信に適した128bitベンダー固有UUID構造)
+4.2 CoreBluetooth実装設計
+BLEデバイスの切断検知、自動再接続、およびバックグラウンド実行を安定してサポートするためのCoreBluetooth実装コードは以下の通り設計する17。
+Swift
+import Foundationimport CoreBluetoothimport Combineenum ConnectionState {    case disconnected    case scanning    case connectedToAdapter [cite: 22]    case initialized [cite: 22]}class OBDDeviceManager: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate {    private var centralManager: CBCentralManager!    private var activePeripheral: CBPeripheral?    private var commCharacteristic: CBCharacteristic?        // 受信データを解析スレッドに転送するためのPublisher    let rxDataStream = PassthroughSubject<String, Never>()    var connectionState: ConnectionState = .disconnected        // LELinkおよび互換モデルを標準ターゲットとする    private let targetServiceUUID = CBUUID(string: "FFE0") [cite: 17]    private let targetCharUUID = CBUUID(string: "FFE1") [cite: 17]        override init() {        super.init()        // バックグラウンドでのBLEプロセスを許可するための中央管理者インスタンス生成        self.centralManager = CBCentralManager(            delegate: self,            queue: DispatchQueue(label: "com.automotive.obd.ble", qos: .userInitiated),            options: [CBCentralManagerOptionRestoreIdentifierKey: "OBDRestoreID"]        )    }        func startScan() {        guard centralManager.state == .poweredOn else { return }        connectionState = .scanning        centralManager.scanForPeripherals(withServices: [targetServiceUUID], options: nil) [cite: 17]    }        // MARK: - CBCentralManagerDelegate    func centralManagerDidUpdateState(_ central: CBCentralManager) {        if central.state == .poweredOn {            startScan()        } else {            connectionState = .disconnected        }    }        func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {        self.activePeripheral = peripheral        centralManager.stopScan() [cite: 17, 23]        centralManager.connect(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey: true])    }        func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {        connectionState = .connectedToAdapter [cite: 22]        peripheral.delegate = self        peripheral.discoverServices([targetServiceUUID]) [cite: 17]    }        func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {        connectionState = .disconnected        // 整備中の不意な切断に対する自動復旧処理        startScan()    }        // MARK: - CBPeripheralDelegate    func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {        guard let services = peripheral.services else { return }        for service in services where service.uuid == targetServiceUUID {            peripheral.discoverCharacteristics([targetCharUUID], for: service) [cite: 17]        }    }        func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {        guard let characteristics = service.characteristics else { return }        for characteristic in characteristics where characteristic.uuid == targetCharUUID {            self.commCharacteristic = characteristic            peripheral.setNotifyValue(true, for: characteristic) [cite: 17]            self.connectionState = .initialized        }    }        func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {        guard let data = characteristic.value,              let text = String(data: data, encoding: .utf8), !text.isEmpty else { return } [cite: 17, 23]        self.rxDataStream.send(text)    }        /// ELM327ドングルへコマンド文字列をASCII形式で書き込む    func writeCommand(_ command: String) {        guard let peripheral = activePeripheral, let char = commCharacteristic else { return }        // すべてのELM327通信は末尾のキャリッジリターン（0x0D）をトリガーにして処理が開始される [cite: 25]        let packet = command + "\r" [cite: 25]        if let data = packet.data(using: .utf8) {            peripheral.writeValue(data, for: char, type: .withResponse)        }    }}
+5. ELM327制御コマンドシーケンスおよびマルチフレーム結合処理
+ELM327を介した車両データ取得プロセスにおいては、正しい順序でのアダプター設定初期化、および車両側から返される分割フレーム（ISO 15765-2 / ISO-TP）のパース処理が必要である16。
+5.1 通信初期化（ATコマンド）シーケンス
+BLEの切断や車両イグニッションの状態（オン・オフ）に影響されずに通信を確立するため、ドングル接続直後は必ず以下の順序でATコマンドを実行する16。
+"ATZ" -> デバイスのハードウェア再起動。バッファをクリアし初期化16
+"ATE0" -> エコーバックをオフ。無駄な受信処理とバッファ消費を防止16
+"ATL0" -> ラインフィード文字（\n）の自動挿入を無効化。キャリッジリターンのみに統一26
+"ATS1" -> 16進データ配列間のスペース表示を有効化。データ分割を容易にする16
+"ATH1" -> CAN IDヘッダーを表示。診断対象ECUを識別するために必須16
+"ATSP0" -> 通信プロトコルの自動検知。車両がISO 15765-4 (CAN) やISO 14230 (KWP2000)等どれに適合しているかを自動判別16
+5.2 ISO-TP（マルチフレーム）デコード処理
+車載CANネットワークにおいて、一度に送信できる物理ペイロードは1フレームあたり最大8バイト（CAN 2.0B規格）に制限されている3。そのため、VIN番号（17バイト）や複数（3個以上）のエラーコード情報を取得する場合、自動的にマルチフレームプロトコル（ISO-TP）に準拠した伝送が発生する16。
+ISO-TPプロトコルの構造定義では、データの開始を示す「ファーストフレーム（PCI: 0x1）」、それに続くパケットであることを示す「コンセキュティブフレーム（PCI: 0x2）」、通信制御を行うための「フローコントロール（PCI: 0x3）」がバイトの先頭で定義されている16。
+(例) エンジンECU (7E8) からVINコード要求 (09 02) に対する受信シリアル文字列群16: 7E8 10 14 49 02 01 57 41 5516 -> [10]: First Frame16, [14]: トータル20バイト長16, [49 02 01]: 応答ヘッダー16 7E8 21 5A 5A 5A 38 54 38 4216 -> [21]: Consecutive Frame Seq 116 7E8 22 41 30 33 34 33 37 3416 -> [22]: Consecutive Frame Seq 216
+マルチフレームのバッファへの再構築処理手順は以下のステップで実施される。
+受信した行データから、通信対象ECUのアドレスであるヘッダー 7E8（エンジンECUの例）を取り出す16。
+各行の第1データバイトの最上位4ビット（ニブル）を検証し、ファーストフレーム（0x10等）を検出する16。そのデータから、メッセージの全体長（例：0x014 = 20バイト）を抽出して配列メモリを確保する16。
+2バイト目以降の肯定応答を示すモード確認バイト（49 02 01）をパースして実データから除外し16、以降に現れる有効な16進表記（57 41 55など）を結合バッファに追記する16。
+次に届くコンセキュティブフレームのヘッダー 21, 22 などを、シーケンス番号（1, 2 ... F のサイクリック番号）が連続しているかシーケンシャル検証したうえで、残りのデータ領域（各フレーム最大7バイト）を順次バッファの末尾へマージする16。
+全長分のデータ（20バイト分）がすべて再構成された段階でパースを完了し、ASCII変換ロジックに通すことで、車両識別番号（例：WAUZZZ8T8BA034374）を生成する16。
+6. iOS汎用整備アプリ向けDTCスキャナー実装設計（Swiftコード）
+汎用整備アプリケーションとしての基盤を構築するため、ELM327のマルチフレーム結合バッファ、J2012準拠のDTCパースエンジン、およびUDSにおける 0x19（ReadDTCInformation）サービスの実装を包括したスキャン処理エンジンをSwift言語にて以下のように実装する4。
+Swift
+import Foundationimport Combineclass VehicleScanner: ObservableObject {    @Published var diagnosedCodes: [DiagnosticTroubleCode] = []    @Published var progressMessage: String = "待機中"        private let deviceManager = OBDDeviceManager()    private var cancellables = Set<AnyCancellable>()    private var responseBuffer: String = ""    private var currentCommand: String = ""        init() {        // BLEレシーバからの受信パケット監視        deviceManager.rxDataStream            .sink { [weak self] fragment in                self?.appendAndProcessFragment(fragment)            }            .store(in: &cancellables)    }        func scanDiagnostics() {        self.diagnosedCodes.removeAll()        self.responseBuffer = ""        self.progressMessage = "スキャン初期化中..."                // 連続コマンドシーケンス（スレッドセーフなタイマーキューイング等で逐次送信する設計が推奨される）        deviceManager.writeCommand("ATZ") [cite: 16, 23]                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {            self.deviceManager.writeCommand("ATE0") [cite: 16]        }        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {            self.deviceManager.writeCommand("ATSP0") [cite: 16]        }        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {            self.progressMessage = "エラーコードを取得中..."            self.currentCommand = "190209" // UDSサービス19 (DTC情報取得、ステータスマスク09)            self.deviceManager.writeCommand(self.currentCommand) [cite: 16]        }    }        private func appendAndProcessFragment(_ fragment: String) {        responseBuffer += fragment                // ELM327のアダプタープロンプトキャラクタ ">" がデータ受信ストリームの完了シグナル        guard responseBuffer.hasSuffix(">") else { return }                let completedStream = responseBuffer            .replacingOccurrences(of: ">", with: "")            .trimmingCharacters(in: .whitespacesAndNewlines)                responseBuffer = "" // バッファ初期化                parseDiagnosticResponse(completedStream)    }        private func parseDiagnosticResponse(_ response: String) {        // 例: UDS肯定応答 "59 02 09" から始まるフレームの解析        let lines = response.components(separatedBy: "\r")        var rawPayload: [String] = []                for line in lines {            let parts = line.components(separatedBy: " ").filter { !$0.isEmpty }            guard parts.count > 1 else { continue }                        // CAN IDヘッダー (例: 7E8) を除去した実体データ列をバッファに追加            if parts[0].count == 3 { // 11ビットCAN ID                rawPayload.append(contentsOf: parts.dropFirst())            } else {                rawPayload.append(contentsOf: parts)            }        }                guard rawPayload.count >= 3 else { return }                // UDS 19 02 サービスの肯定応答は 59 02 で開始される        if rawPayload[0] == "59" && rawPayload[1] == "02" {            var decodedList: [DiagnosticTroubleCode] = []            var index = 3 // 59 02 [StatusMask] 以降がDTCデータリスト                        while index + 1 < rawPayload.count {                // 各DTCは、2バイトのコード + 1バイトのステータスフラグ（UDS仕様）で格納されている                guard let byte1 = UInt8(rawPayload[index], radix: 16),                      let byte2 = UInt8(rawPayload[index+1], radix: 16) else {                    break                }                                // すべて0x00のパディングデータに達した場合は走査を終了                if byte1 == 0 && byte2 == 0 { break }                                if let dtc = DTCParser.decode(bytes: [byte1, byte2]) { [cite: 5]                    decodedList.append(dtc)                }                                // UDS 0x19 0x02では各DTCの後に1バイトのステータス情報（保留中、未確認、歴史的障害フラグなど）が続くため、3ステップ進める                index += 3            }                        DispatchQueue.main.async {                self.diagnosedCodes = decodedList                self.progressMessage = "スキャン完了: \(decodedList.count)件の不具合検知"            }        }    }}
+7. 結論
+iOSプラットフォーム上で動作する汎用車載整備アプリケーションを効率的に開発し、整備現場で実用レベルの成果を収めるためには、国際規格であるSAE J2012/ISO 15031-6で規定されたデコードアルゴリズムの厳格な実装と1、自動車メーカーごとに異なる固有コード定義群（全体の約半分に及ぶ膨大なデータ資産）を適切にハンドリングするためのデータ設計が必須とされる14。
+本研究が示すように、アプリケーションの性能向上と通信プロセスの安定化には、以下の要素を統合したアーキテクチャ設計が極めて有効である。
+メモリフットプリントと検索効率の最適化：起動時のオーバーヘッドを排除するためのメーカー別分割型JSON構成と15、SQLiteデータベースによるインデックス検索処理の導入14。
+iOS環境に特化したBLE通信：車両との常時データ接続を確保するバッググラウンドBLEプロセス管理19。
+高度な診断要求への適応性：UDSプロトコル（サービスID 0x19）を網羅した3バイトデータおよびFTB（故障サブタイプ）をパース可能なデコードエンジンの構築1。
+これらのシステム要件を兼ね備えることで、各メーカー固有の複雑な障害を迅速に判別し、安全で正確な車両整備作業を強力に支援するiOSアプリケーションの実装が可能となる2。
+引用文献
+Diagnostic Trouble Code (DTC) Explanation: From Zero Basics to Complete Mastery, https://en.eeworld.com.cn/news/qrs/eic698361.html
+Diagnostic Trouble Codes (DTC) List - Snap-on, https://www.snapon.com/EN/US/Diagnostics/OffNav/Diagnostic-Trouble-Codes
+On-board diagnostics - Wikipedia, https://en.wikipedia.org/wiki/On-board_diagnostics
+J2012_201612 : Diagnostic Trouble Code Definitions - SAE International, https://www.sae.org/standards/j2012_201612-diagnostic-trouble-code-definitions
+J2012_201303 : Diagnostic Trouble Code Definitions - SAE International, https://www.sae.org/standards/j2012_201303-diagnostic-trouble-code-definitions
+はじめての診断 - Vector, https://cdn.vector.com/cms/content/know-how/VJ/PDF/For_Beginners_Diagnostic_Communication.pdf
+OBD Diagnostic Service (Mode) $03 – Request emission-related diagnostic trouble codes (DTCs) - x-engineer.org, https://x-engineer.org/obd-diagnostic-service-mode-03-request-emission-related-diagnostic-trouble-codes-dtcs/
+How to Decode OBD2 Diagnostic Trouble Codes - Carista, https://carista.com/en-intl/blogs/news/how-to-decode-obd2-diagnostic-trouble-codes
+Automotive DTCs: Codes, Causes & Fix Paths (Guide) - AutoPi.io, https://www.autopi.io/blog/automotive-diagnostic-trouble-codes/
+lennykean/OBDII.DTC - GitHub, https://github.com/lennykean/OBDII.DTC
+The Complete Diagnostic Trouble Codes (DTC) Guide - Enterprise Fleet Management, https://www.efleets.com/en/proof-and-insights/white-papers/complete-diagnostic-trouble-codes-guide.html
+How do DTC codes work? - Motive, https://gomotive.com/blog/how-do-dtc-codes-work/
+DTC Codes: Everything You Need to Know to Manage Your Fleet | Linxup, https://www.linxup.com/blog/dtc-codes-everything-you-need-to-know-to-manage-your-fleet
+Wal33D/dtc-database - GitHub, https://github.com/Wal33D/dtc-database
+GitHub - Automotive-9/dtc-codes: A large collection of proprietary DTC codes, grouped by manufacturer, https://github.com/Automotive-9/dtc-codes
+Automotive-Swift/ELMterm: An OBD2 terminal for the next generation - GitHub, https://github.com/Automotive-Swift/ELMterm
+iOSとOBD-IIで車両データを取得する - aptpod Tech Blog, https://tech.aptpod.co.jp/entry/2021/12/10/070000
+Encoding and Decoding Custom Types | Apple Developer Documentation, https://developer.apple.com/documentation/foundation/encoding-and-decoding-custom-types
+Connecting to Your Car with Swift: A Hands-on Guide to SwiftOBD2 | by Kemo Konteh, https://medium.com/@kkonteh97/build-an-obd2-car-diagnostics-app-with-swift-02e91b6f828e
+SuperTool ELM327 OBD2 Code Scanner Instruction Manual, https://manuals.plus/ae/1005003580903339
+kkonteh97/SwiftOBD2: Swift OBD2: Real-time vehicle diagnostics made simple. Read live data, clear trouble codes, and build custom automotive apps. Bluetooth/WiFi ready with built-in testing emulator. · GitHub, https://github.com/kkonteh97/SwiftOBD2
+How to use BLE OBDII Peripheral - Stack Overflow, https://stackoverflow.com/questions/42570070/how-to-use-ble-obdii-peripheral
+【CoreBluetooth】「サービス」と「キャラクタリスティック」 #iOS - Qiita, https://qiita.com/bright23/items/00b114067ddf0284d8a1
+ELM327 Scanner Commands Overview | PDF | Throttle | Automotive Industry - Scribd, https://www.scribd.com/presentation/423259437/OBD-II-DrMcGregor-pptx
+Commands of ELM327 - MacFJA/OBD2 - GitHub, https://github.com/MacFJA/OBD2/blob/master/src/main/java/io/github/macfja/obd2/elm327/command/Commands.md
+What Is OBD2? Complete Guide to On-Board Diagnostics (2025) - AutoPi.io, https://www.autopi.io/blog/what-is-obd-2/

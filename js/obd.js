@@ -1,6 +1,43 @@
-const SERVICE_UUIDS = [
-  "0000fff0-0000-1000-8000-00805f9b34fb",
-  "0000ffe0-0000-1000-8000-00805f9b34fb",
+/** BLE ELM327 アダプタの既知 GATT プロファイル（調査資料 §4.1 準拠） */
+import { decodeVin, parseVinFromObdResponse } from "./vin-decode.js";
+
+const BLE_PROFILES = [
+  {
+    id: "ios-vlink",
+    label: "IOS-Vlink / OBDLink",
+    service: "e7810a71-73ae-499d-8c15-faa9aef0c3f2",
+    characteristic: "bef8d6c9-9c21-4c9e-b632-bd58c1009f9f",
+  },
+  {
+    id: "lelink-ffe0",
+    label: "LELink / 汎用 FFE0",
+    service: "0000ffe0-0000-1000-8000-00805f9b34fb",
+    characteristic: "0000ffe1-0000-1000-8000-00805f9b34fb",
+  },
+  {
+    id: "generic-fff0",
+    label: "Generic FFF0",
+    service: "0000fff0-0000-1000-8000-00805f9b34fb",
+    characteristic: null,
+  },
+];
+
+const OPTIONAL_SERVICE_UUIDS = BLE_PROFILES.map((p) => p.service);
+
+const SCAN_FILTERS = [
+  { namePrefix: "OBD" },
+  { namePrefix: "obd" },
+  { namePrefix: "ELM" },
+  { namePrefix: "VEEPEAK" },
+  { namePrefix: "Vgate" },
+  { namePrefix: "IOS-Vlink" },
+  { namePrefix: "Android-Vlink" },
+  { namePrefix: "OBDLink" },
+  { namePrefix: "LELink" },
+  { namePrefix: "vLinker" },
+  { services: ["0000ffe0-0000-1000-8000-00805f9b34fb"] },
+  { services: ["0000fff0-0000-1000-8000-00805f9b34fb"] },
+  { services: ["e7810a71-73ae-499d-8c15-faa9aef0c3f2"] },
 ];
 
 const PIDs = {
@@ -104,19 +141,61 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
     }
   }
 
+  async function findCharsInService(service, characteristicUuid) {
+    if (characteristicUuid) {
+      const ch = await service.getCharacteristic(characteristicUuid);
+      const canNotify = ch.properties.notify || ch.properties.indicate;
+      const canWrite = ch.properties.write || ch.properties.writeWithoutResponse;
+      if (canNotify && canWrite) {
+        return { notify: ch, writeable: ch };
+      }
+      if (canNotify) {
+        return { notify: ch, writeable: ch };
+      }
+      throw new Error("キャラクタリスティックが通知/書き込みに対応していません");
+    }
+
+    const chars = await service.getCharacteristics();
+    let notify = null;
+    let writeable = null;
+    for (const ch of chars) {
+      if (ch.properties.notify || ch.properties.indicate) notify = ch;
+      if (ch.properties.write || ch.properties.writeWithoutResponse) writeable = ch;
+    }
+    if (notify && writeable) return { notify, writeable };
+    if (notify && (notify.properties.write || notify.properties.writeWithoutResponse)) {
+      return { notify, writeable: notify };
+    }
+    throw new Error("サービス内に送受信キャラクタリスティックが見つかりません");
+  }
+
   async function findChars(server) {
+    for (const profile of BLE_PROFILES) {
+      try {
+        const service = await server.getPrimaryService(profile.service);
+        const pair = await findCharsInService(service, profile.characteristic);
+        log(`GATTプロファイル: ${profile.label}`);
+        return { ...pair, profile };
+      } catch {
+        /* 次のプロファイルを試す */
+      }
+    }
+
     const services = await server.getPrimaryServices();
     let notify = null;
     let writeable = null;
     for (const service of services) {
-      const chars = await service.getCharacteristics();
-      for (const ch of chars) {
-        if (ch.properties.notify || ch.properties.indicate) notify = ch;
-        if (ch.properties.write || ch.properties.writeWithoutResponse) writeable = ch;
+      try {
+        const pair = await findCharsInService(service, null);
+        notify = pair.notify;
+        writeable = pair.writeable;
+        log(`GATTプロファイル: フォールバック (${service.uuid})`);
+        return { notify, writeable, profile: { label: "Unknown" } };
+      } catch {
+        /* continue */
       }
     }
-    if (!notify || !writeable) throw new Error("書き込み/通知キャラクタリスティックが見つかりません");
-    return { notify, writeable };
+    throw new Error("書き込み/通知キャラクタリスティックが見つかりません");
   }
 
   async function connect() {
@@ -128,16 +207,8 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
     log("BLE OBD を探しています…");
 
     device = await navigator.bluetooth.requestDevice({
-      filters: [
-        { namePrefix: "OBD" },
-        { namePrefix: "obd" },
-        { namePrefix: "ELM" },
-        { namePrefix: "VEEPEAK" },
-        { namePrefix: "Vgate" },
-        { namePrefix: "IOS-Vlink" },
-        { namePrefix: "Android-Vlink" },
-      ],
-      optionalServices: SERVICE_UUIDS,
+      filters: SCAN_FILTERS,
+      optionalServices: OPTIONAL_SERVICE_UUIDS,
     });
 
     device.addEventListener("gattserverdisconnected", () => {
@@ -226,6 +297,32 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
     }
   }
 
+  const DEMO_VIN = "ZARFA1234H1234567";
+
+  async function readVin() {
+    if (mode === "sim") {
+      const decoded = decodeVin(DEMO_VIN);
+      log(`デモ VIN: ${DEMO_VIN}`);
+      return decoded;
+    }
+    if (mode !== "live") throw new Error("先に接続してください");
+    stopPolling();
+    try {
+      log("VIN読み取り (Mode 09 02)…");
+      await sendAndWait("ATH1", 3000);
+      const res = await sendAndWait("0902", 8000);
+      log(res.trim().slice(0, 600) || "(empty)");
+      await sendAndWait("ATH0", 3000);
+      const vin = parseVinFromObdResponse(res);
+      if (!vin) throw new Error("VINを取得できませんでした（車両が Mode 09 に未対応の可能性）");
+      const decoded = decodeVin(vin);
+      log(`VIN: ${vin}`);
+      return decoded;
+    } finally {
+      startPolling();
+    }
+  }
+
   function startSimulation() {
     disconnect(false);
     mode = "sim";
@@ -284,6 +381,7 @@ export function createObdClient({ onLog, onTelemetry, onStatus }) {
     startSimulation,
     readDtcs,
     clearDtcs,
+    readVin,
     getMode,
   };
 }

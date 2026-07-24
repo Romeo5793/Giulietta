@@ -1,19 +1,26 @@
 import { lookupDtc } from "./dtc-dict.js";
 
-export async function askGeminiAboutDtcs({ apiKey, codes, vehicleLabel, telemetry }) {
+export async function askGeminiAboutDtcs({ apiKey, codes, vehicle, telemetry }) {
   if (!apiKey) throw new Error("Gemini APIキーが未設定です（設定タブ）");
 
-  const details = codes
-    .map((c) => {
-      const d = lookupDtc(c);
-      return `${c}: ${d.name} — ${d.desc}`;
-    })
-    .join("\n");
+  const label = [vehicle?.make, vehicle?.model, vehicle?.nickname, vehicle?.year]
+    .filter(Boolean)
+    .join(" / ");
 
-  const prompt = `あなたは Alfa Romeo Giulietta 1.4 MultiAir（コンペティツィオーネ / MT）に詳しい整備アドバイザーです。
+  const details = (
+    await Promise.all(
+      codes.map(async (c) => {
+        const d = await lookupDtc(c, vehicle?.make);
+        const sev = ["情報", "軽度", "要整備", "即時確認"][d.severity] ?? "軽度";
+        return `${c} [${sev}]: ${d.name} — ${d.desc}`;
+      })
+    )
+  ).join("\n");
+
+  const prompt = `あなたは自動車整備に詳しいアドバイザーです。車種は問いません。
 断定しすぎず、安全に点検・整備工場へ相談すべき点も書いてください。日本語で、Markdownの短い箇条書き中心。
 
-車両: ${vehicleLabel || "Giulietta 1.4"}
+車両: ${label || "（未登録）"}
 テレメトリ概要: ${JSON.stringify(telemetry || {})}
 DTC:
 ${details || "(コードなし)"}
@@ -35,8 +42,7 @@ ${details || "(コードなし)"}
   }
 
   const data = await res.json();
-  const text =
-    data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("\n") ||
-    "応答が空でした。";
-  return text;
+  return (
+    data?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("\n") || "応答が空でした。"
+  );
 }

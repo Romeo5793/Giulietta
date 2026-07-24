@@ -1,64 +1,23 @@
-/** 1.4 MultiAir Competizione 向けの初期整備メニュー（目安・編集可） */
-export const DEFAULT_SERVICE_ITEMS = [
-  {
-    id: "oil",
-    name: "エンジンオイル＋フィルタ",
-    intervalKm: 10000,
-    intervalMonths: 12,
-    note: "MultiAirはオイル管理が重要。取説の規格に合う油を使用。",
-  },
-  {
-    id: "cabin-filter",
-    name: "キャビンフィルタ",
-    intervalKm: 15000,
-    intervalMonths: 12,
-    note: "",
-  },
-  {
-    id: "air-filter",
-    name: "エアフィルタ",
-    intervalKm: 30000,
-    intervalMonths: 36,
-    note: "",
-  },
-  {
-    id: "spark-plugs",
-    name: "スパークプラグ",
-    intervalKm: 45000,
-    intervalMonths: 48,
-    note: "",
-  },
-  {
-    id: "brake-fluid",
-    name: "ブレーキフルード",
-    intervalKm: null,
-    intervalMonths: 24,
-    note: "距離より年数優先が多い項目。",
-  },
-  {
-    id: "coolant",
-    name: "クーラント",
-    intervalKm: 60000,
-    intervalMonths: 60,
-    note: "",
-  },
-  {
-    id: "timing-belt",
-    name: "タイミングベルト関連",
-    intervalKm: 120000,
-    intervalMonths: 60,
-    note: "年式・仕様で異なる。ディーラー推奨を優先。",
-  },
-];
+import { getTemplate } from "./vehicle-templates.js";
 
-export function ensureDefaultItems(items) {
-  if (items && items.length) return items;
-  const now = new Date().toISOString().slice(0, 10);
-  return DEFAULT_SERVICE_ITEMS.map((item) => ({
+export function instantiateItems(templateItems, { lastDate, lastOdometerKm } = {}) {
+  const today = lastDate || new Date().toISOString().slice(0, 10);
+  const odo = lastOdometerKm ?? 0;
+  return templateItems.map((item) => ({
     ...item,
-    lastDate: now,
-    lastOdometerKm: 0,
+    lastDate: today,
+    lastOdometerKm: odo,
   }));
+}
+
+export function itemsFromTemplate(templateId, odometerKm = 0) {
+  const template = getTemplate(templateId);
+  return instantiateItems(template.items, { lastOdometerKm: odometerKm });
+}
+
+export function ensureDefaultItems(items, templateId = "gasoline-na") {
+  if (items && items.length) return items;
+  return itemsFromTemplate(templateId);
 }
 
 function monthsBetween(fromIso, toDate = new Date()) {

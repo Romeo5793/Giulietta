@@ -3,12 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0c0a0b" />
-    <title>Giulietta Service — 1.4 Competizione MT</title>
+    <meta name="theme-color" content="#0a0e14" />
+    <meta name="description" content="全車種対応の整備手帳。走行距離・定期点検・OBD診断をひとつに。" />
+    <title>Garage Log — 整備手帳</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Oswald:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./css/style.css" />
@@ -16,9 +17,15 @@
   <body>
     <div id="app">
       <section class="view" data-view="home">
-        <p class="eyebrow">Alfa Romeo · Scheduled Care</p>
-        <h1 class="brand">GIULIETTA <span>SERVICE</span></h1>
-        <p class="lede" id="home-vehicle">1.4 Competizione MT</p>
+        <p class="eyebrow">Universal · Maintenance Logbook</p>
+        <h1 class="brand">GARAGE <span>LOG</span></h1>
+        <p class="lede" id="home-vehicle">マイカー</p>
+        <p class="lede subtle" id="home-subtitle">全車種対応の整備手帳</p>
+
+        <div class="panel">
+          <label class="field-label" for="vehicle-select">車両を選択</label>
+          <select id="vehicle-select" class="vehicle-select"></select>
+        </div>
 
         <div class="panel">
           <div class="row" style="justify-content: space-between">
@@ -39,7 +46,7 @@
         <div class="panel">
           <h2 class="panel-title">次に来そうな整備</h2>
           <ul class="list" id="home-upcoming" style="margin-top: 0.75rem"></ul>
-          <p class="note">間隔は目安です。取扱説明書・整備手帳を正としてください。</p>
+          <p class="note">間隔は目安です。各車の取扱説明書・整備記録を正としてください。</p>
         </div>
       </section>
 
@@ -89,7 +96,7 @@
       <section class="view" data-view="obd" hidden>
         <p class="eyebrow">Diagnostics</p>
         <h1 class="brand">OBD</h1>
-        <p class="lede">安い BLE ELM327 系アダプタ向け。まずはデモで画面確認も可。</p>
+        <p class="lede">OBD-II 対応車ならメーカー問わず。BLE ELM327 系アダプタ向け。</p>
 
         <div class="panel">
           <div class="row" style="justify-content: space-between">
@@ -101,6 +108,16 @@
             <button id="btn-obd-connect" class="btn btn-primary" type="button">BLE接続</button>
             <button id="btn-obd-demo" class="btn btn-warn" type="button">デモ</button>
             <button id="btn-obd-disconnect" class="btn btn-ghost" type="button">切断</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">VIN（車台番号）</h2>
+          <p class="metric" style="margin-top: 0.5rem"><b id="vin-display" style="font-family: ui-monospace, monospace">—</b></p>
+          <p class="note" id="vin-decode-hint">接続後に読み取れます</p>
+          <div class="row" style="margin-top: 0.75rem">
+            <button id="btn-vin-read" class="btn btn-primary" type="button">VIN読み取り</button>
+            <button id="btn-vin-apply" class="btn btn-ok" type="button" disabled>車両に反映</button>
           </div>
         </div>
 
@@ -127,33 +144,91 @@
           <ul class="list" id="dtc-list" style="margin-top: 0.75rem">
             <li class="list-item"><p>まだ読み取っていません。</p></li>
           </ul>
-          <pre class="log-box" id="ai-out" style="margin-top: 0.75rem; color: #e8d5cf">AIの回答がここに出ます</pre>
+          <pre class="log-box" id="ai-out" style="margin-top: 0.75rem; color: #c8d4e8">AIの回答がここに出ます</pre>
+          <p class="note">診断結果は参考情報です。重要な故障判断は整備工場にご相談ください。</p>
         </div>
       </section>
 
       <section class="view" data-view="settings" hidden>
-        <p class="eyebrow">Vehicle</p>
+        <p class="eyebrow">Garage</p>
         <h1 class="brand">設定</h1>
-        <p class="lede">車両情報と任意の Gemini キー。</p>
+        <p class="lede">車両の登録・編集。データは端末内に保存されます。</p>
 
         <div class="panel">
-          <form id="settings-form" class="stack">
+          <h2 class="panel-title">登録車両</h2>
+          <ul class="list" id="vehicle-list" style="margin-top: 0.75rem"></ul>
+          <p class="note" id="add-vehicle-hint"></p>
+          <form id="add-vehicle-form" class="stack" style="margin-top: 0.85rem">
             <label>
-              表示名
-              <input id="set-name" type="text" />
+              ニックネーム（表示名）
+              <input id="add-nickname" type="text" placeholder="例: 通勤カー" />
             </label>
             <label>
-              年式メモ
+              メーカー
+              <input id="add-make" type="text" placeholder="例: Toyota" required />
+            </label>
+            <label>
+              車種
+              <input id="add-model" type="text" placeholder="例: Prius" required />
+            </label>
+            <label>
+              年式
+              <input id="add-year" type="text" placeholder="例: 2020" />
+            </label>
+            <label>
+              ナンバー（任意）
+              <input id="add-plate" type="text" />
+            </label>
+            <label>
+              走行距離 (km)
+              <input id="add-odo" type="number" min="0" step="1" value="0" />
+            </label>
+            <label>
+              初期テンプレート
+              <select id="add-template"></select>
+            </label>
+            <button id="btn-add-vehicle" class="btn btn-primary" type="submit">車両を追加</button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2 class="panel-title">選択中の車両</h2>
+          <form id="settings-form" class="stack" style="margin-top: 0.75rem">
+            <label>
+              ニックネーム
+              <input id="set-nickname" type="text" />
+            </label>
+            <label>
+              メーカー
+              <input id="set-make" type="text" />
+            </label>
+            <label>
+              車種
+              <input id="set-model" type="text" />
+            </label>
+            <label>
+              年式
               <input id="set-year" type="text" placeholder="例: 2015" />
             </label>
             <label>
-              ナンバーメモ
+              ナンバー
               <input id="set-plate" type="text" />
+            </label>
+            <label>
+              VIN（車台番号）
+              <input id="set-vin" type="text" maxlength="17" placeholder="OBDタブから読み取り可" style="font-family: ui-monospace, monospace" />
             </label>
             <label>
               走行距離 (km)
               <input id="set-odo" type="number" min="0" step="1" />
             </label>
+            <label>
+              整備テンプレート
+              <select id="set-template"></select>
+            </label>
+            <div class="row">
+              <button id="btn-apply-template" class="btn btn-warn" type="button">テンプレ適用</button>
+            </div>
             <label>
               Gemini API Key（任意）
               <input id="set-gemini" type="password" autocomplete="off" placeholder="AIに聞く 用" />
@@ -161,9 +236,9 @@
             <button class="btn btn-primary" type="submit">保存</button>
           </form>
           <button id="btn-reset" class="btn btn-danger" type="button" style="margin-top: 0.85rem">
-            データを初期化
+            すべてのデータを初期化
           </button>
-          <p class="note">データはこの端末のブラウザ内のみに保存されます。</p>
+          <p class="note">本アプリは整備記録の補助ツールです。法的な車検証・整備保証の代替にはなりません。</p>
         </div>
       </section>
     </div>
