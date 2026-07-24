@@ -22,6 +22,8 @@
 
 ## 起動
 
+### Windows
+
 ```bash
 cd C:\Users\user\Documents\Cursor\giulietta-service
 npx --yes serve .
@@ -31,6 +33,21 @@ py -m http.server 5173 --bind 127.0.0.1
 
 Chrome / Edge で `http://127.0.0.1:5173` を開く。
 
+### Mac（「giulietta service を使いたい」と言われたら）
+
+**手順の正:** [`docs/MAC-SETUP.md`](MAC-SETUP.md)
+
+```bash
+cd ~/Documents/Cursor/giulietta-service   # 初回は git clone 先
+python3 -m http.server 5173 --bind 127.0.0.1
+```
+
+Chrome / Edge で `http://127.0.0.1:5173` を開く。  
+初回クローン: `git clone https://github.com/Romeo5793/Giulietta.git ~/Documents/Cursor/giulietta-service`
+
 ## Cursor で開くとき
 
-**File → Open Folder** で `C:\Users\user\Documents\Cursor\giulietta-service` を選ぶ（デスクトップのジャンクションでも可）。
+- **Windows:** `C:\Users\user\Documents\Cursor\giulietta-service`（デスクトップのジャンクションでも可）
+- **Mac:** `~/Documents/Cursor/giulietta-service`
+
+エージェント向け索引: ルートの [`AGENTS.md`](../AGENTS.md)

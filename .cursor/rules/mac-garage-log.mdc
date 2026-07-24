@@ -1,0 +1,17 @@
+---
+description: Mac で Giulietta Service / Garage Log を開く・起動する。ユーザーが Mac、giulietta、Garage Log、起動、使いたいと言ったときは docs/MAC-SETUP.md に従う。
+alwaysApply: false
+---
+
+# Mac で Garage Log（Giulietta Service）を開く
+
+ユーザーが **Mac** でこのアプリを使いたい・開きたい・起動したいと言った場合:
+
+1. **`docs/MAC-SETUP.md` を読む**（手順の正）
+2. プロジェクトは GitHub から取得: `git clone https://github.com/Romeo5793/Giulietta.git` → フォルダ名 `giulietta-service` 推奨
+3. 推奨パス: `~/Documents/Cursor/giulietta-service`
+4. 起動: `python3 -m http.server 5173 --bind 127.0.0.1`
+5. ブラウザ: **http://127.0.0.1:5173**（Chrome / Edge。OBD は Safari 非推奨）
+6. `index.html` のダブルクリックや `file://` では開かない（モジュール・DTC 読み込みのため HTTP 必須）
+
+データは `localStorage`（`garage-log-v2`）。Mac 初回は空の状態から始まる。

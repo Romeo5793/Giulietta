@@ -17,14 +17,27 @@
 ## 使い方
 
 ```bash
-# Node がある場合
+# Node がある場合（Windows / Mac 共通）
 npx --yes serve .
 
-# Node が無い場合（Windows）
+# Windows（Python）
 py -m http.server 5173 --bind 127.0.0.1
+
+# Mac
+python3 -m http.server 5173 --bind 127.0.0.1
 ```
 
 Chrome または Edge で `http://127.0.0.1:5173` を開く。
+
+### Mac で初めて使うとき
+
+```bash
+git clone https://github.com/Romeo5793/Giulietta.git ~/Documents/Cursor/giulietta-service
+cd ~/Documents/Cursor/giulietta-service
+python3 -m http.server 5173 --bind 127.0.0.1
+```
+
+詳細: [`docs/MAC-SETUP.md`](docs/MAC-SETUP.md)（「Mac で giulietta service を使いたい」と言えばここを案内）
 
 ## OBD
 
